@@ -1,0 +1,1204 @@
+{
+ "summaries": [
+  {
+   "date": 1782259200,
+   "gainedXp": 46,
+   "numSessions": 2,
+   "totalSessionTime": 548,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1782345600,
+   "gainedXp": 115,
+   "numSessions": 5,
+   "totalSessionTime": 985,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1782432000,
+   "gainedXp": 276,
+   "numSessions": 12,
+   "totalSessionTime": 3288,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1782518400,
+   "gainedXp": 69,
+   "numSessions": 3,
+   "totalSessionTime": 765,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1782604800,
+   "gainedXp": 46,
+   "numSessions": 2,
+   "totalSessionTime": 382,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1782691200,
+   "gainedXp": 230,
+   "numSessions": 10,
+   "totalSessionTime": 2570,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1782777600,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1782864000,
+   "gainedXp": 230,
+   "numSessions": 10,
+   "totalSessionTime": 2330,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1782950400,
+   "gainedXp": 253,
+   "numSessions": 11,
+   "totalSessionTime": 2365,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1783036800,
+   "gainedXp": 46,
+   "numSessions": 2,
+   "totalSessionTime": 554,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1783123200,
+   "gainedXp": 184,
+   "numSessions": 8,
+   "totalSessionTime": 1784,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1783209600,
+   "gainedXp": 115,
+   "numSessions": 5,
+   "totalSessionTime": 1385,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1783296000,
+   "gainedXp": 69,
+   "numSessions": 3,
+   "totalSessionTime": 684,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1783382400,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1783468800,
+   "gainedXp": 138,
+   "numSessions": 6,
+   "totalSessionTime": 1698,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1783555200,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1783641600,
+   "gainedXp": 184,
+   "numSessions": 8,
+   "totalSessionTime": 1520,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1783728000,
+   "gainedXp": 276,
+   "numSessions": 12,
+   "totalSessionTime": 3108,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1783814400,
+   "gainedXp": 161,
+   "numSessions": 7,
+   "totalSessionTime": 1771,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1783900800,
+   "gainedXp": 69,
+   "numSessions": 3,
+   "totalSessionTime": 555,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1783987200,
+   "gainedXp": 138,
+   "numSessions": 6,
+   "totalSessionTime": 1140,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1784073600,
+   "gainedXp": 69,
+   "numSessions": 3,
+   "totalSessionTime": 684,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1784160000,
+   "gainedXp": 276,
+   "numSessions": 12,
+   "totalSessionTime": 3432,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1784246400,
+   "gainedXp": 161,
+   "numSessions": 7,
+   "totalSessionTime": 1575,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1784332800,
+   "gainedXp": 138,
+   "numSessions": 6,
+   "totalSessionTime": 1614,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1784419200,
+   "gainedXp": 276,
+   "numSessions": 12,
+   "totalSessionTime": 2268,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1784505600,
+   "gainedXp": 92,
+   "numSessions": 4,
+   "totalSessionTime": 992,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1784592000,
+   "gainedXp": 92,
+   "numSessions": 4,
+   "totalSessionTime": 956,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1784678400,
+   "gainedXp": 276,
+   "numSessions": 12,
+   "totalSessionTime": 3216,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1784764800,
+   "gainedXp": 276,
+   "numSessions": 12,
+   "totalSessionTime": 2652,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1784851200,
+   "gainedXp": 46,
+   "numSessions": 2,
+   "totalSessionTime": 418,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1784937600,
+   "gainedXp": 161,
+   "numSessions": 7,
+   "totalSessionTime": 1617,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1785024000,
+   "gainedXp": 115,
+   "numSessions": 5,
+   "totalSessionTime": 1480,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1785110400,
+   "gainedXp": 161,
+   "numSessions": 7,
+   "totalSessionTime": 1449,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1785196800,
+   "gainedXp": 184,
+   "numSessions": 8,
+   "totalSessionTime": 2344,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1785283200,
+   "gainedXp": 207,
+   "numSessions": 9,
+   "totalSessionTime": 1782,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1785369600,
+   "gainedXp": 115,
+   "numSessions": 5,
+   "totalSessionTime": 1375,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1785456000,
+   "gainedXp": 138,
+   "numSessions": 6,
+   "totalSessionTime": 1650,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1785542400,
+   "gainedXp": 253,
+   "numSessions": 11,
+   "totalSessionTime": 2541,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1785628800,
+   "gainedXp": 92,
+   "numSessions": 4,
+   "totalSessionTime": 980,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1785715200,
+   "gainedXp": 46,
+   "numSessions": 2,
+   "totalSessionTime": 580,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1785801600,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1785888000,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1785974400,
+   "gainedXp": 69,
+   "numSessions": 3,
+   "totalSessionTime": 687,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1786060800,
+   "gainedXp": 207,
+   "numSessions": 9,
+   "totalSessionTime": 2223,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1786147200,
+   "gainedXp": 230,
+   "numSessions": 10,
+   "totalSessionTime": 2900,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1786233600,
+   "gainedXp": 276,
+   "numSessions": 12,
+   "totalSessionTime": 3264,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1786320000,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1786406400,
+   "gainedXp": 138,
+   "numSessions": 6,
+   "totalSessionTime": 1668,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1786492800,
+   "gainedXp": 69,
+   "numSessions": 3,
+   "totalSessionTime": 651,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1786579200,
+   "gainedXp": 207,
+   "numSessions": 9,
+   "totalSessionTime": 1620,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1786665600,
+   "gainedXp": 138,
+   "numSessions": 6,
+   "totalSessionTime": 1464,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1786752000,
+   "gainedXp": 230,
+   "numSessions": 10,
+   "totalSessionTime": 2960,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1786838400,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1786924800,
+   "gainedXp": 276,
+   "numSessions": 12,
+   "totalSessionTime": 2928,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1787011200,
+   "gainedXp": 92,
+   "numSessions": 4,
+   "totalSessionTime": 908,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1787097600,
+   "gainedXp": 230,
+   "numSessions": 10,
+   "totalSessionTime": 2790,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1787184000,
+   "gainedXp": 46,
+   "numSessions": 2,
+   "totalSessionTime": 512,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1787270400,
+   "gainedXp": 46,
+   "numSessions": 2,
+   "totalSessionTime": 388,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1787356800,
+   "gainedXp": 138,
+   "numSessions": 6,
+   "totalSessionTime": 1260,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1787443200,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1787529600,
+   "gainedXp": 69,
+   "numSessions": 3,
+   "totalSessionTime": 570,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1787616000,
+   "gainedXp": 69,
+   "numSessions": 3,
+   "totalSessionTime": 831,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1787702400,
+   "gainedXp": 92,
+   "numSessions": 4,
+   "totalSessionTime": 784,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1787788800,
+   "gainedXp": 230,
+   "numSessions": 10,
+   "totalSessionTime": 2010,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1787875200,
+   "gainedXp": 253,
+   "numSessions": 11,
+   "totalSessionTime": 2574,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1787961600,
+   "gainedXp": 230,
+   "numSessions": 10,
+   "totalSessionTime": 2760,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1788048000,
+   "gainedXp": 115,
+   "numSessions": 5,
+   "totalSessionTime": 1355,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1788134400,
+   "gainedXp": 276,
+   "numSessions": 12,
+   "totalSessionTime": 3156,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1788220800,
+   "gainedXp": 230,
+   "numSessions": 10,
+   "totalSessionTime": 2370,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1788307200,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1788393600,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1788480000,
+   "gainedXp": 115,
+   "numSessions": 5,
+   "totalSessionTime": 1275,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1788566400,
+   "gainedXp": 69,
+   "numSessions": 3,
+   "totalSessionTime": 810,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1788652800,
+   "gainedXp": 115,
+   "numSessions": 5,
+   "totalSessionTime": 940,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1788739200,
+   "gainedXp": 161,
+   "numSessions": 7,
+   "totalSessionTime": 1323,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1788825600,
+   "gainedXp": 138,
+   "numSessions": 6,
+   "totalSessionTime": 1590,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1788912000,
+   "gainedXp": 230,
+   "numSessions": 10,
+   "totalSessionTime": 1960,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1788998400,
+   "gainedXp": 253,
+   "numSessions": 11,
+   "totalSessionTime": 2783,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1789084800,
+   "gainedXp": 207,
+   "numSessions": 9,
+   "totalSessionTime": 2547,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1789171200,
+   "gainedXp": 69,
+   "numSessions": 3,
+   "totalSessionTime": 576,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1789257600,
+   "gainedXp": 161,
+   "numSessions": 7,
+   "totalSessionTime": 1638,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1789344000,
+   "gainedXp": 46,
+   "numSessions": 2,
+   "totalSessionTime": 532,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1789430400,
+   "gainedXp": 276,
+   "numSessions": 12,
+   "totalSessionTime": 2304,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1789516800,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1789603200,
+   "gainedXp": 69,
+   "numSessions": 3,
+   "totalSessionTime": 633,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1789689600,
+   "gainedXp": 230,
+   "numSessions": 10,
+   "totalSessionTime": 2370,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1789776000,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1789862400,
+   "gainedXp": 115,
+   "numSessions": 5,
+   "totalSessionTime": 1455,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1789948800,
+   "gainedXp": 207,
+   "numSessions": 9,
+   "totalSessionTime": 2547,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1790035200,
+   "gainedXp": 230,
+   "numSessions": 10,
+   "totalSessionTime": 1920,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1790121600,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1790208000,
+   "gainedXp": 69,
+   "numSessions": 3,
+   "totalSessionTime": 894,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1790294400,
+   "gainedXp": 115,
+   "numSessions": 5,
+   "totalSessionTime": 1005,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1790380800,
+   "gainedXp": 207,
+   "numSessions": 9,
+   "totalSessionTime": 1863,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1790467200,
+   "gainedXp": 46,
+   "numSessions": 2,
+   "totalSessionTime": 402,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1790553600,
+   "gainedXp": 184,
+   "numSessions": 8,
+   "totalSessionTime": 1704,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1790640000,
+   "gainedXp": 207,
+   "numSessions": 9,
+   "totalSessionTime": 1944,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1790726400,
+   "gainedXp": 230,
+   "numSessions": 10,
+   "totalSessionTime": 2640,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1790812800,
+   "gainedXp": 92,
+   "numSessions": 4,
+   "totalSessionTime": 816,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1790899200,
+   "gainedXp": 46,
+   "numSessions": 2,
+   "totalSessionTime": 508,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1790985600,
+   "gainedXp": 46,
+   "numSessions": 2,
+   "totalSessionTime": 550,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1791072000,
+   "gainedXp": 46,
+   "numSessions": 2,
+   "totalSessionTime": 508,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1791158400,
+   "gainedXp": 230,
+   "numSessions": 10,
+   "totalSessionTime": 2000,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1791244800,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1791331200,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1791417600,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1791504000,
+   "gainedXp": 115,
+   "numSessions": 5,
+   "totalSessionTime": 1155,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1791590400,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1791676800,
+   "gainedXp": 253,
+   "numSessions": 11,
+   "totalSessionTime": 2816,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1791763200,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1791849600,
+   "gainedXp": 253,
+   "numSessions": 11,
+   "totalSessionTime": 2772,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1791936000,
+   "gainedXp": 138,
+   "numSessions": 6,
+   "totalSessionTime": 1236,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1792022400,
+   "gainedXp": 161,
+   "numSessions": 7,
+   "totalSessionTime": 1470,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1792108800,
+   "gainedXp": 92,
+   "numSessions": 4,
+   "totalSessionTime": 1060,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1792195200,
+   "gainedXp": 207,
+   "numSessions": 9,
+   "totalSessionTime": 1980,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1792281600,
+   "gainedXp": 69,
+   "numSessions": 3,
+   "totalSessionTime": 543,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1792368000,
+   "gainedXp": 253,
+   "numSessions": 11,
+   "totalSessionTime": 2112,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1792454400,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1792540800,
+   "gainedXp": 92,
+   "numSessions": 4,
+   "totalSessionTime": 1196,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1792627200,
+   "gainedXp": 69,
+   "numSessions": 3,
+   "totalSessionTime": 876,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1792713600,
+   "gainedXp": 138,
+   "numSessions": 6,
+   "totalSessionTime": 1200,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1792800000,
+   "gainedXp": 230,
+   "numSessions": 10,
+   "totalSessionTime": 2700,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1792886400,
+   "gainedXp": 276,
+   "numSessions": 12,
+   "totalSessionTime": 2964,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1792972800,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1793059200,
+   "gainedXp": 276,
+   "numSessions": 12,
+   "totalSessionTime": 2316,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1793145600,
+   "gainedXp": 92,
+   "numSessions": 4,
+   "totalSessionTime": 852,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1793232000,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1793318400,
+   "gainedXp": 92,
+   "numSessions": 4,
+   "totalSessionTime": 856,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1793404800,
+   "gainedXp": 115,
+   "numSessions": 5,
+   "totalSessionTime": 1355,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1793491200,
+   "gainedXp": 276,
+   "numSessions": 12,
+   "totalSessionTime": 3132,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1793577600,
+   "gainedXp": 230,
+   "numSessions": 10,
+   "totalSessionTime": 2420,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1793664000,
+   "gainedXp": 46,
+   "numSessions": 2,
+   "totalSessionTime": 382,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1793750400,
+   "gainedXp": 138,
+   "numSessions": 6,
+   "totalSessionTime": 1110,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1793836800,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1793923200,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1794009600,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1794096000,
+   "gainedXp": 184,
+   "numSessions": 8,
+   "totalSessionTime": 2008,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1794182400,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1794268800,
+   "gainedXp": 92,
+   "numSessions": 4,
+   "totalSessionTime": 996,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1794355200,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1794441600,
+   "gainedXp": 92,
+   "numSessions": 4,
+   "totalSessionTime": 940,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1794528000,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1794614400,
+   "gainedXp": 46,
+   "numSessions": 2,
+   "totalSessionTime": 590,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1794700800,
+   "gainedXp": 276,
+   "numSessions": 12,
+   "totalSessionTime": 2532,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1794787200,
+   "gainedXp": 161,
+   "numSessions": 7,
+   "totalSessionTime": 1953,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1794873600,
+   "gainedXp": 184,
+   "numSessions": 8,
+   "totalSessionTime": 2072,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1794960000,
+   "gainedXp": 115,
+   "numSessions": 5,
+   "totalSessionTime": 1450,
+   "frozen": false,
+   "streakExtended": true
+  },
+  {
+   "date": 1795046400,
+   "gainedXp": 0,
+   "numSessions": 0,
+   "totalSessionTime": 0,
+   "frozen": false,
+   "streakExtended": false
+  },
+  {
+   "date": 1795132800,
+   "gainedXp": 184,
+   "numSessions": 8,
+   "totalSessionTime": 1464,
+   "frozen": false,
+   "streakExtended": true
+  }
+ ]
+}

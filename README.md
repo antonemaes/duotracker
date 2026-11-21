@@ -1,15 +1,16 @@
 # duo-nudge 🦉
 
+📊 **[Dashboard](https://<you>.github.io/<repo>/)** — live lesson stats and section-completion projections (GitHub Pages, updated daily). Replace `<you>`/`<repo>` with your GitHub username and repo name.
+
 Sends a push notification to your iPhone saying how many minutes of Duolingo lessons you have left today. It stays quiet once you've done 60 minutes.
 
 ```
 🦉 37 min of Duolingo left
-▓▓▓░░░░░░░ 38%
 Done today: 23 / 60 min (6 lessons)
 4.6 h until midnight
 ```
 
-**Stack:** Python (standard library + `python-dotenv`/`tzdata`, see `requirements.txt`), Duolingo's *unofficial* `xp_summaries` endpoint, GitHub Actions for the schedule, and [ntfy](https://ntfy.sh) for push notifications.
+**Stack:** Python (standard library + `tzdata`, see `requirements.txt`), Duolingo's *unofficial* `xp_summaries` endpoint, GitHub Actions for the schedule, and [ntfy](https://ntfy.sh) for push notifications.
 
 ## Setup (about 15 min)
 
@@ -22,13 +23,13 @@ Done today: 23 / 60 min (6 lessons)
    .venv\Scripts\pip install -r requirements.txt
    copy .env.example .env                  # then edit .env and fill in DUO_JWT and NTFY_TOPIC
    ```
-   `.env` is gitignored — the script loads it automatically; real environment variables still take precedence (that's how GitHub Actions injects secrets).
+   `.env` is gitignored — nothing loads it automatically anymore. Locally, export it into your shell first: `set -a; source .env; set +a` (Git Bash). In GitHub Actions, secrets are injected as real environment variables, which the scripts read directly.
 4. **Test locally:**
    ```bash
    .venv\Scripts\python duo_nudge.py --force --debug --dry-run   # check the raw fields
    .venv\Scripts\python duo_nudge.py --force                     # send a real push
    ```
-5. **Push to a *private* GitHub repo.** In Settings → Secrets and variables → Actions, add the secrets `DUO_JWT` and `NTFY_TOPIC`.
+5. **Push to a GitHub repo.** In Settings → Secrets and variables → Actions, add the secrets `DUO_JWT` and `NTFY_TOPIC`. Keep it *private* for the nudge alone — but note the dashboard on Pages needs a *public* repo on a free plan (see below).
 6. **Test the workflow:** go to Actions → *Duolingo nudge* → *Run workflow*.
 
 ## Tuning
@@ -40,6 +41,41 @@ Edit the `env:` block in `.github/workflows/nudge.yml`:
 | `DUO_GOAL_MINUTES` | `60` | Daily goal |
 | `DUO_NUDGE_HOURS` | `12,16,19,21,22` | Local hours to nudge. The last one is marked "last call" |
 | `DUO_TZ` | `Europe/Zurich` | Your time zone |
+
+## Dashboard 📊
+
+`duo_dashboard.py` generates **`index.html`** — a single self-contained, mobile-friendly page (no external scripts/fonts, works offline and on GitHub Pages). It makes two unofficial API calls:
+
+- `xp_summaries` for the lesson history (small), and
+- `users/{id}?fields=currentCourse` (~9 MB) — `currentCourse.pathSectioned` has every section, unit and step with `totalSessions`/`finishedSessions`, so **remaining lessons per section are read live**, no hand-maintained config. That's why this runs in the *daily* dashboard job only, never in the hourly nudge job.
+
+The page shows:
+
+- **Top cards:** projected completion dates for **Section 5** and **Section 6** — live remaining lessons (counting all unfinished sections up to that one) divided by your **7-day moving average** of lessons/day.
+- **Stat cards:** lessons today, this week, 7-day average, course progress (path lessons done/total, live), total lessons.
+- **Chart:** green bars = lessons per week (left axis), blue line = cumulative lessons (right axis), dashed = projection at the 7-day average out to **end of Q1 2027** (`2027-03-31`), with markers where the projection crosses your section milestones. The header also shows the unit you're currently on.
+
+**Daily updates:** `.github/workflows/dashboard.yml` runs once a day (plus a manual *Run workflow* button), regenerates `index.html`, and commits it back to the repo. Two one-time setup steps:
+
+1. Settings → Actions → General → Workflow permissions → allow **Read and write permissions** (so the workflow can commit).
+2. Settings → Pages → Source: *Deploy from a branch* → `main` / `(root)`. Because the file is named `index.html`, the dashboard is served at the site **root**: `https://<you>.github.io/<repo>/` — add that to your phone's home screen. (Note: on a free GitHub plan, Pages only serves *public* repos — make the repo public, or use a paid plan to keep it private.)
+
+**Local test** (offline, uses the checked-in mock data — a saved `xp_summaries` range and a saved `currentCourse` tree):
+
+```bash
+.venv\Scripts\python duo_dashboard.py --mock tests/mock_range.json --mock-course tests/mock_course.json --days 150
+# writes ./index.html — open it in a browser
+```
+
+Dashboard env vars (set in the `env:` block of `.github/workflows/dashboard.yml`):
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `DUO_HISTORY_DAYS` | `365` | How much history to fetch and chart |
+| `DUO_PROJECTION_END` | `2027-03-31` | Where the projection line stops (end of Q1 2027) |
+| `DUO_PROJECTION_SECTIONS` | `5,6` | Which sections get completion-date cards |
+| `DUO_MOCK_JSON` / `DUO_MOCK_COURSE_JSON` | — | Saved API responses for offline runs |
+| `DASHBOARD_OUT` | `index.html` | Output file (name it `index.html` so Pages serves it at the site root) |
 
 ## Things to know
 

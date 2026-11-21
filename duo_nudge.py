@@ -124,12 +124,9 @@ def build_message(done, sessions, goal, now, last_hour):
     left = max(0, round(goal - done))
     midnight = datetime.combine(now.date() + timedelta(days=1), datetime.min.time(), now.tzinfo)
     hours_left = (midnight - now).total_seconds() / 3600
-    pct = min(100, round(100 * done / goal)) if goal else 100
-    bar = "▓" * (pct // 10) + "░" * (10 - pct // 10)
 
     title = f"🦉 {left} min of Duolingo left"
-    body = (f"{bar} {pct}%\n"
-            f"Done today: {round(done)} / {goal} min ({sessions} lessons)\n"
+    body = (f"Done today: {round(done)} / {goal} min ({sessions} lessons)\n"
             f"{hours_left:.1f} h until midnight")
     if now.hour >= last_hour:
         priority, tags = "high", "rotating_light"
