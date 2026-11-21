@@ -1,0 +1,32 @@
+name: Duolingo nudge
+
+on:
+  schedule:
+    # Cron in GitHub Actions is always UTC. This runs hourly at :07 from 09-22 UTC
+    # (10:07-23:07 Zurich in winter, 11:07-00:07 in summer). The script itself
+    # decides whether the current *local* hour is a nudge hour, so DST is handled.
+    - cron: "7 9-22 * * *"
+  workflow_dispatch:        # adds a "Run workflow" button for manual tests
+    inputs:
+      force:
+        description: "Ignore nudge hours"
+        type: boolean
+        default: true
+
+jobs:
+  nudge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check progress and nudge
+        env:
+          DUO_JWT: ${{ secrets.DUO_JWT }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          DUO_GOAL_MINUTES: "60"
+          DUO_NUDGE_HOURS: "12,16,19,21,22"
+          DUO_TZ: "Europe/Zurich"
+        run: python duo_nudge.py ${{ inputs.force && '--force' || '' }}
