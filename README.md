@@ -71,7 +71,8 @@ Dashboard env vars (set in the `env:` block of `.github/workflows/dashboard.yml`
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `DUO_HISTORY_DAYS` | `365` | How much history to fetch and chart |
+| `DUO_HISTORY_DAYS` | `365` | How much history to fetch (stats/averages use all of it) |
+| `DUO_CHART_START` | `2026-10-01` | Where the graph's x-axis starts (Oct 2026) |
 | `DUO_PROJECTION_END` | `2027-03-31` | Where the projection line stops (end of Q1 2027) |
 | `DUO_PROJECTION_SECTIONS` | `5,6` | Which sections get completion-date cards |
 | `DUO_MOCK_JSON` / `DUO_MOCK_COURSE_JSON` | — | Saved API responses for offline runs |

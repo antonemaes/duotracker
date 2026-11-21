@@ -20,7 +20,8 @@ Config (environment variables)
   DUO_TZ                  optional  IANA time zone                     (default Europe/Zurich)
   DUO_MOCK_JSON           optional  saved xp_summaries response, for offline testing
   DUO_MOCK_COURSE_JSON    optional  saved currentCourse response, for offline testing
-  DUO_HISTORY_DAYS        optional  days of history to fetch/chart     (default 365)
+  DUO_HISTORY_DAYS        optional  days of history to fetch           (default 365)
+  DUO_CHART_START         optional  ISO date the graph's x-axis starts (default 2026-10-01)
   DUO_PROJECTION_END      optional  ISO date the projection runs to    (default 2027-03-31)
   DUO_PROJECTION_SECTIONS optional  comma-separated section numbers  (default 5,6)
   DASHBOARD_OUT           optional  output HTML file                   (default index.html)
@@ -30,6 +31,7 @@ Both endpoints are unofficial and undocumented; either could change or break at 
 Flags
   --out PATH         output file (overrides DASHBOARD_OUT)
   --days N           history window in days (overrides DUO_HISTORY_DAYS)
+  --chart-start DATE ISO date the graph starts at (overrides DUO_CHART_START)
   --mock PATH        offline mode: saved xp_summaries response
   --mock-course PATH offline mode: saved currentCourse response
   --debug            print the raw API responses (field-name checking)
@@ -74,6 +76,7 @@ def load_config(args):
         "mock": args.mock or env("DUO_MOCK_JSON"),
         "mock_course": args.mock_course or env("DUO_MOCK_COURSE_JSON"),
         "days": args.days or int(env("DUO_HISTORY_DAYS", "365")),
+        "chart_start": date.fromisoformat(args.chart_start or env("DUO_CHART_START", "2026-10-01")),
         "proj_end": date.fromisoformat(env("DUO_PROJECTION_END", "2027-03-31")),
         "proj_sections": sorted(int(s) for s in env("DUO_PROJECTION_SECTIONS", "5,6").split(",")),
         "out": Path(args.out or env("DASHBOARD_OUT", "index.html")),
@@ -296,8 +299,11 @@ def render_chart(days, weeks, cum, proj, today, x_end, section_dates):
     for ws, lessons in weeks:
         if lessons <= 0:
             continue
-        x = X(ws) + (slot - bw) / 2
-        p.append(f'<rect x="{x:.1f}" y="{YL(lessons):.1f}" width="{bw:.1f}" '
+        x = max(X(ws) + (slot - bw) / 2, ml)   # clamp a partial first week at the left edge
+        w = min(bw, X(ws + timedelta(days=7)) - x)
+        if w <= 0:
+            continue
+        p.append(f'<rect x="{x:.1f}" y="{YL(lessons):.1f}" width="{w:.1f}" '
                  f'height="{mt + ph - YL(lessons):.1f}" rx="2" fill="#58cc02" fill-opacity="0.85"/>')
 
     p.append('<polyline points="' + " ".join(f"{X(d):.1f},{YR(c):.1f}" for d, c in cum)
@@ -434,6 +440,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", help="output HTML file (overrides DASHBOARD_OUT)")
     ap.add_argument("--days", type=int, help="history window in days (overrides DUO_HISTORY_DAYS)")
+    ap.add_argument("--chart-start", help="ISO date the graph's x-axis starts at (overrides DUO_CHART_START)")
     ap.add_argument("--mock", help="saved xp_summaries response (offline)")
     ap.add_argument("--mock-course", help="saved currentCourse response (offline)")
     ap.add_argument("--debug", action="store_true", help="print the raw API responses")
@@ -464,7 +471,13 @@ def main():
     current_unit = course["current_unit"]
     sec_dates = project_sections(course["sections"], today, ma7, cfg["proj_sections"])
 
-    svg = render_chart(days, weeks, cum, proj, today, cfg["proj_end"], sec_dates)
+    # the graph is windowed to start at DUO_CHART_START; stats/MA above use the full history
+    x_start = max(days[0][0], min(cfg["chart_start"], today))
+    chart_days = [d for d in days if d[0] >= x_start] or days
+    chart_cum = [(d, c) for d, c in cum if d >= chart_days[0][0]] or cum
+    chart_weeks = [(ws, l) for ws, l in weeks if ws + timedelta(days=7) > chart_days[0][0]]
+
+    svg = render_chart(chart_days, chart_weeks, chart_cum, proj, today, cfg["proj_end"], sec_dates)
     page = render_html(now, today, days, ma7, cum, course, current_unit,
                        sec_dates, svg, cfg["proj_end"], cfg["proj_sections"])
     cfg["out"].write_text(page, encoding="utf-8")
