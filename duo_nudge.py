@@ -8,7 +8,7 @@ How it works
   3. Converts today's lesson time (totalSessionTime, seconds) to minutes.
   4. If it's one of your nudge hours and you're under goal, sends a push via ntfy.
 
-Config (environment variables, or a .env file next to this script - see .env.example)
+Config (environment variables)
   DUO_JWT            required  your Duolingo jwt_token cookie (treat like a password!)
   NTFY_TOPIC         required  your private ntfy topic name (make it long and random)
   DUO_GOAL_MINUTES   optional  daily goal in minutes            (default 60)
@@ -33,14 +33,6 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-try:
-    from dotenv import load_dotenv
-    load_dotenv()          # reads .env when running locally
-except ImportError:
-    pass                   # on GitHub Actions the secrets come from env vars
-
-# Load .env from the script's directory; real environment variables win (e.g. GitHub Actions secrets).
-load_dotenv(Path(__file__).resolve().parent / ".env")
 
 # Windows consoles default to a legacy code page that can't print emoji; the nudge body is UTF-8.
 if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
