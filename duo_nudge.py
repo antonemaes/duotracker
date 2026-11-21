@@ -33,7 +33,11 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+    load_dotenv()          # reads .env when running locally
+except ImportError:
+    pass                   # on GitHub Actions the secrets come from env vars
 
 # Load .env from the script's directory; real environment variables win (e.g. GitHub Actions secrets).
 load_dotenv(Path(__file__).resolve().parent / ".env")
