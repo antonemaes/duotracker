@@ -33,6 +33,7 @@ jobs:
           DUO_TZ: "Europe/Zurich"
           DUO_HISTORY_DAYS: "365"
           DUO_CHART_START: "2026-10-01"      # graph x-axis starts here (Oct 2026)
+          DUO_WEEKLY_TARGET: "175"           # bar target per week (25 lessons/day x 7)
           DUO_PROJECTION_END: "2027-03-31"   # end of Q1 2027
           DUO_PROJECTION_SECTIONS: "5,6"
         run: python duo_dashboard.py --out index.html

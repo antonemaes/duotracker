@@ -22,6 +22,7 @@ Config (environment variables)
   DUO_MOCK_COURSE_JSON    optional  saved currentCourse response, for offline testing
   DUO_HISTORY_DAYS        optional  days of history to fetch           (default 365)
   DUO_CHART_START         optional  ISO date the graph's x-axis starts (default 2026-10-01)
+  DUO_WEEKLY_TARGET       optional  weekly lessons target; bars >= this are green (default 175 = 25/day)
   DUO_PROJECTION_END      optional  ISO date the projection runs to    (default 2027-03-31)
   DUO_PROJECTION_SECTIONS optional  comma-separated section numbers  (default 5,6)
   DASHBOARD_OUT           optional  output HTML file                   (default index.html)
@@ -32,6 +33,7 @@ Flags
   --out PATH         output file (overrides DASHBOARD_OUT)
   --days N           history window in days (overrides DUO_HISTORY_DAYS)
   --chart-start DATE ISO date the graph starts at (overrides DUO_CHART_START)
+  --weekly-target N  weekly lessons target for bar coloring (overrides DUO_WEEKLY_TARGET)
   --mock PATH        offline mode: saved xp_summaries response
   --mock-course PATH offline mode: saved currentCourse response
   --debug            print the raw API responses (field-name checking)
@@ -77,6 +79,7 @@ def load_config(args):
         "mock_course": args.mock_course or env("DUO_MOCK_COURSE_JSON"),
         "days": args.days or int(env("DUO_HISTORY_DAYS", "365")),
         "chart_start": date.fromisoformat(args.chart_start or env("DUO_CHART_START", "2026-10-01")),
+        "weekly_target": args.weekly_target or int(env("DUO_WEEKLY_TARGET", "175")),
         "proj_end": date.fromisoformat(env("DUO_PROJECTION_END", "2027-03-31")),
         "proj_sections": sorted(int(s) for s in env("DUO_PROJECTION_SECTIONS", "5,6").split(",")),
         "out": Path(args.out or env("DASHBOARD_OUT", "index.html")),
@@ -253,7 +256,7 @@ def moving_avg7(days):
 
 # ---------- chart (inline SVG, no external deps) ----------
 
-def render_chart(days, weeks, cum, proj, today, x_end, section_dates):
+def render_chart(days, weeks, cum, proj, today, x_end, section_dates, week_target):
     W, H = 720, 400
     ml, mr, mt, mb = 46, 54, 34, 40
     pw, ph = W - ml - mr, H - mt - mb
@@ -263,8 +266,8 @@ def render_chart(days, weeks, cum, proj, today, x_end, section_dates):
     def X(d):
         return ml + (d - x0).days / span * pw
 
-    max_bar = max([l for _, l in weeks] + [5])          # left axis: lessons / week
-    max_cum = max([c for _, c in cum + proj] + [10])    # right axis: cumulative lessons
+    max_bar = max([l for _, l in weeks] + [week_target, 5])   # left axis: lessons / week
+    max_cum = max([c for _, c in cum + proj] + [10])          # right axis: cumulative lessons
 
     def YL(v):
         return mt + ph - v / max_bar * ph
@@ -283,6 +286,11 @@ def render_chart(days, weeks, cum, proj, today, x_end, section_dates):
         cv = max_cum * i / 5
         p.append(f'<text x="{W - mr + 6}" y="{y + 4:.1f}" fill="#5d8fb0" font-size="11" text-anchor="start">{int(round(cv)):,}</text>')
 
+    # weekly-target line
+    yt = YL(week_target)
+    p.append(f'<line x1="{ml}" y1="{yt:.1f}" x2="{W - mr}" y2="{yt:.1f}" stroke="#e8f1f2" stroke-width="1" stroke-dasharray="3 4" opacity="0.7"/>')
+    p.append(f'<text x="{ml + 4}" y="{yt - 4:.1f}" fill="#e8f1f2" font-size="10" opacity="0.8">target {week_target}/wk</text>')
+
     y, m = x0.year, x0.month
     while date(y, m, 1) <= x_end:
         d = date(y, m, 1)
@@ -297,14 +305,16 @@ def render_chart(days, weeks, cum, proj, today, x_end, section_dates):
     slot = pw * 7 / span
     bw = slot * 0.72
     for ws, lessons in weeks:
-        if lessons <= 0:
-            continue
         x = max(X(ws) + (slot - bw) / 2, ml)   # clamp a partial first week at the left edge
         w = min(bw, X(ws + timedelta(days=7)) - x)
         if w <= 0:
             continue
-        p.append(f'<rect x="{x:.1f}" y="{YL(lessons):.1f}" width="{w:.1f}" '
-                 f'height="{mt + ph - YL(lessons):.1f}" rx="2" fill="#58cc02" fill-opacity="0.85"/>')
+        color = "#58cc02" if lessons >= week_target else "#ff4b4b"
+        h = mt + ph - YL(lessons)
+        if lessons <= 0:
+            h = 3   # baseline tick marks a week with zero lessons
+        p.append(f'<rect x="{x:.1f}" y="{mt + ph - h:.1f}" width="{w:.1f}" height="{h:.1f}" '
+                 f'rx="2" fill="{color}" fill-opacity="0.85"/>')
 
     p.append('<polyline points="' + " ".join(f"{X(d):.1f},{YR(c):.1f}" for d, c in cum)
              + '" fill="none" stroke="#1cb0f6" stroke-width="2.5" stroke-linejoin="round"/>')
@@ -354,7 +364,7 @@ footer { color: #5f7a82; font-size: 12px; margin-top: 18px; line-height: 1.5; }
 """
 
 
-def render_html(now, today, days, ma7, cum, course, current_unit, sec_dates, svg, proj_end, wanted):
+def render_html(now, today, days, ma7, cum, course, current_unit, sec_dates, svg, proj_end, wanted, week_target):
     total = cum[-1][1] if cum else 0
     lessons_today = days[-1][1]
     week_start = today - timedelta(days=today.weekday())
@@ -416,7 +426,8 @@ def render_html(now, today, days, ma7, cum, course, current_unit, sec_dates, svg
   <section class="card">
     <div class="chart-scroll">{svg}</div>
     <div class="legend">
-      <span><span class="sw" style="background:#58cc02"></span>lessons / week (left axis)</span>
+      <span><span class="sw" style="background:#58cc02"></span>week ≥ {week_target} lessons</span>
+      <span><span class="sw" style="background:#ff4b4b"></span>week &lt; {week_target} (left axis)</span>
       <span><span class="sw line" style="background:#1cb0f6"></span>cumulative lessons (right axis)</span>
       <span><span class="sw line" style="background:#1cb0f6;opacity:.7"></span>projection @ {ma7:.1f}/day to {proj_end:%d %b %Y}</span>
       <span><span class="sw line" style="background:#ffc800"></span>section milestones</span>
@@ -441,6 +452,7 @@ def main():
     ap.add_argument("--out", help="output HTML file (overrides DASHBOARD_OUT)")
     ap.add_argument("--days", type=int, help="history window in days (overrides DUO_HISTORY_DAYS)")
     ap.add_argument("--chart-start", help="ISO date the graph's x-axis starts at (overrides DUO_CHART_START)")
+    ap.add_argument("--weekly-target", type=int, help="weekly lessons target for bar coloring (overrides DUO_WEEKLY_TARGET)")
     ap.add_argument("--mock", help="saved xp_summaries response (offline)")
     ap.add_argument("--mock-course", help="saved currentCourse response (offline)")
     ap.add_argument("--debug", action="store_true", help="print the raw API responses")
@@ -477,9 +489,9 @@ def main():
     chart_cum = [(d, c) for d, c in cum if d >= chart_days[0][0]] or cum
     chart_weeks = [(ws, l) for ws, l in weeks if ws + timedelta(days=7) > chart_days[0][0]]
 
-    svg = render_chart(chart_days, chart_weeks, chart_cum, proj, today, cfg["proj_end"], sec_dates)
+    svg = render_chart(chart_days, chart_weeks, chart_cum, proj, today, cfg["proj_end"], sec_dates, cfg["weekly_target"])
     page = render_html(now, today, days, ma7, cum, course, current_unit,
-                       sec_dates, svg, cfg["proj_end"], cfg["proj_sections"])
+                       sec_dates, svg, cfg["proj_end"], cfg["proj_sections"], cfg["weekly_target"])
     cfg["out"].write_text(page, encoding="utf-8")
 
     print(f"Wrote {cfg['out']} ({cfg['out'].stat().st_size:,} bytes)")
