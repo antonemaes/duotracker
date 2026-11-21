@@ -142,31 +142,41 @@ def _steps_of(unit):
 def parse_course(data):
     """Extract per-section lesson totals from currentCourse.pathSectioned.
 
-    Tolerates 'steps' or 'levels' under each unit, and sections that carry steps directly.
+    Tolerates 'steps' or 'levels' under each unit, sections that carry steps directly,
+    and missing title/index fields (falls back to position and generic labels).
     """
     course = (data or {}).get("currentCourse") or {}
     sections = []
+    current_unit = None
     for i, sec in enumerate(course.get("pathSectioned") or [], start=1):
-        num = sec.get("index") or sec.get("number")
+        num = sec.get("index") or sec.get("number") or sec.get("sectionIndex")
         if num is None:
-            m = re.search(r"(\d+)", str(sec.get("title") or ""))
+            m = re.search(r"(\d+)", str(sec.get("title") or sec.get("name") or ""))
             num = int(m.group(1)) if m else i
         units = sec.get("units") or ([sec] if _steps_of(sec) else [])
         total = finished = 0
         for u in units:
             steps = _steps_of(u)
+            u_total = u_finished = 0
             if steps:
                 for st in steps:
                     t = int(st.get("totalSessions") or 0)
-                    finished += min(int(st.get("finishedSessions") or 0), t)
-                    total += t
+                    u_total += t
+                    u_finished += min(int(st.get("finishedSessions") or 0), t)
             else:
-                t = int(u.get("totalSessions") or 0)
-                total += t
-                finished += min(int(u.get("finishedSessions") or 0), t)
+                u_total = int(u.get("totalSessions") or 0)
+                u_finished = min(int(u.get("finishedSessions") or 0), u_total)
+            total += u_total
+            finished += u_finished
+            if current_unit is None and u_total > u_finished:
+                label = u.get("title") or u.get("name") or u.get("label")
+                if not label:
+                    idx = u.get("index") or u.get("number") or u.get("id")
+                    label = f"Unit {idx}" if idx is not None else "current unit"
+                current_unit = f"Section {num}: {label}"
         sections.append({
             "num": int(num),
-            "title": sec.get("title") or f"Section {num}",
+            "title": sec.get("title") or sec.get("name") or f"Section {num}",
             "total": total,
             "finished": min(finished, total),
             "remaining": max(0, total - finished),
@@ -176,24 +186,8 @@ def parse_course(data):
         "sections": sections,
         "total": sum(s["total"] for s in sections),
         "finished": sum(s["finished"] for s in sections),
+        "current_unit": current_unit,
     }
-
-
-def course_current_unit(data):
-    """Title of the first unit that still has unfinished steps (best-effort 'now')."""
-    course = (data or {}).get("currentCourse") or {}
-    for sec in course.get("pathSectioned") or []:
-        units = sec.get("units") or ([sec] if _steps_of(sec) else [])
-        for u in units:
-            steps = _steps_of(u)
-            if steps:
-                rem = sum(max(0, int(st.get("totalSessions") or 0) - min(int(st.get("finishedSessions") or 0), int(st.get("totalSessions") or 0))) for st in steps)
-            else:
-                t = int(u.get("totalSessions") or 0)
-                rem = max(0, t - min(int(u.get("finishedSessions") or 0), t))
-            if rem > 0:
-                return f"Section {sec.get('index') or sec.get('title')}: {u.get('title') or 'unit'}"
-    return None
 
 
 def project_sections(sections, today, ma7, wanted):
@@ -467,7 +461,7 @@ def main():
             for n in range((cfg["proj_end"] - today).days + 1)]
 
     course = parse_course(course_raw)
-    current_unit = course_current_unit(course_raw)
+    current_unit = course["current_unit"]
     sec_dates = project_sections(course["sections"], today, ma7, cfg["proj_sections"])
 
     svg = render_chart(days, weeks, cum, proj, today, cfg["proj_end"], sec_dates)

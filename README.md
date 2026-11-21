@@ -1,6 +1,6 @@
 # duo-nudge 🦉
 
-📊 **[Dashboard](https://<you>.github.io/<repo>/)** — live lesson stats and section-completion projections (GitHub Pages, updated daily). Replace `<you>`/`<repo>` with your GitHub username and repo name.
+📊 **[Dashboard](https://antonemaes.github.io/duotracker/)** — live lesson stats and section-completion projections (GitHub Pages, updated daily).
 
 Sends a push notification to your iPhone saying how many minutes of Duolingo lessons you have left today. It stays quiet once you've done 60 minutes.
 
@@ -58,7 +58,7 @@ The page shows:
 **Daily updates:** `.github/workflows/dashboard.yml` runs once a day (plus a manual *Run workflow* button), regenerates `index.html`, and commits it back to the repo. Two one-time setup steps:
 
 1. Settings → Actions → General → Workflow permissions → allow **Read and write permissions** (so the workflow can commit).
-2. Settings → Pages → Source: *Deploy from a branch* → `main` / `(root)`. Because the file is named `index.html`, the dashboard is served at the site **root**: `https://<you>.github.io/<repo>/` — add that to your phone's home screen. (Note: on a free GitHub plan, Pages only serves *public* repos — make the repo public, or use a paid plan to keep it private.)
+2. Settings → Pages → Source: *Deploy from a branch* → `main` / `(root)`. Because the file is named `index.html`, the dashboard is served at the site **root**: `https://antonemaes.github.io/duotracker/` — add that to your phone's home screen. (Note: on a free GitHub plan, Pages only serves *public* repos — make the repo public, or use a paid plan to keep it private.)
 
 **Local test** (offline, uses the checked-in mock data — a saved `xp_summaries` range and a saved `currentCourse` tree):
 
