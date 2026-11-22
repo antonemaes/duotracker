@@ -368,7 +368,54 @@ svg { display: block; width: 100%; min-width: 640px; height: auto; }
 .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
 .sw.line { height: 3px; vertical-align: 2px; border-radius: 2px; }
 footer { color: #5f7a82; font-size: 12px; margin-top: 18px; line-height: 1.5; }
+#refreshbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 10px;
+              background: #1b262b; border-bottom: 1px solid #2a3a40; margin: -16px -14px 12px;
+              padding: 8px 14px; font-size: 13px; color: #8fa6ad; }
+#refreshbar.hidden { display: none; }
+#refreshbar .track { flex: 1; height: 6px; background: #2a3a40; border-radius: 3px; overflow: hidden; }
+#refreshbar .bar { height: 100%; width: 40%; background: #58cc02; border-radius: 3px; animation: slide 1.2s ease-in-out infinite; }
+@keyframes slide { 0% { margin-left: -40%; } 100% { margin-left: 100%; } }
 """
+
+
+# Inline script for the refresh progress bar. Kept out of the f-string below so its
+# braces don't need escaping. Raw string so the regex \d stays literal.
+REFRESH_JS = r"""<script>
+(function () {
+  var KEY = "duoDashRefreshAt";
+  var bar = document.getElementById("refreshbar");
+  var msg = document.getElementById("refreshmsg");
+  var updatedEl = document.querySelector("header .muted");
+  var m0 = updatedEl && updatedEl.textContent.match(/updated (\d{4}-\d{2}-\d{2} \d{2}:\d{2})/);
+  var cur = m0 ? m0[1] : "";
+  var pending = null;
+  try { pending = localStorage.getItem(KEY); } catch (e) {}
+  var btn = document.querySelector("a.refresh");
+  if (btn) btn.addEventListener("click", function () {
+    try { localStorage.setItem(KEY, new Date().toLocaleTimeString()); } catch (e) {}
+  });
+  if (!pending) return;
+  bar.classList.remove("hidden");
+  msg.textContent = "Refresh requested at " + pending + " - this page reloads itself when the new dashboard is live.";
+  var t0 = Date.now();
+  var iv = setInterval(function () {
+    if (Date.now() - t0 > 10 * 60 * 1000) {
+      clearInterval(iv);
+      try { localStorage.removeItem(KEY); } catch (e) {}
+      msg.textContent = "Still waiting - check the Actions tab; you can also just reload this page.";
+      return;
+    }
+    fetch(location.pathname, { cache: "no-store" }).then(function (r) { return r.text(); }).then(function (t) {
+      var m = t.match(/updated (\d{4}-\d{2}-\d{2} \d{2}:\d{2})/);
+      if (m && cur && m[1] !== cur) {
+        clearInterval(iv);
+        try { localStorage.removeItem(KEY); } catch (e) {}
+        location.href = location.pathname;
+      }
+    }).catch(function () {});
+  }, 15000);
+})();
+</script>"""
 
 
 def render_html(now, today, days, ma7, cum, course, current_unit, sec_dates, svg, proj_end, wanted, week_target, repo):
@@ -424,9 +471,11 @@ def render_html(now, today, days, ma7, cum, course, current_unit, sec_dates, svg
     <h1>🦉 {course_title}</h1>
     <span>
       <span class="muted">updated {now:%Y-%m-%d %H:%M %Z}{now_line}</span>
-      <a class="refresh" href="{refresh_url}" target="_blank" rel="noopener" title="Trigger the dashboard workflow on GitHub, then press 'Run workflow'">🔄 refresh</a>
+      <a class="refresh" href="{refresh_url}" target="_blank" rel="noopener" title="Opens the workflow page - press 'Run workflow' there; this page then shows a progress bar and reloads automatically">🔄 refresh</a>
     </span>
   </header>
+
+  <div id="refreshbar" class="hidden"><span id="refreshmsg"></span><div class="track"><div class="bar"></div></div></div>
 
   <section class="cards projection">
     {proj_cards}
@@ -451,6 +500,7 @@ def render_html(now, today, days, ma7, cum, course, current_unit, sec_dates, svg
     Projection assumes a constant {ma7:.1f} lessons/day (7-day moving average).
   </footer>
 </main>
+{REFRESH_JS}
 </body>
 </html>
 """
