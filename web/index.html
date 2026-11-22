@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Duotracker</title>
+<meta name="description" content="Live language-learning dashboard: today's lessons, streak and projected section finish dates, refreshed every 5 minutes.">
+<meta name="theme-color" content="#f2f5f6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b1114" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Duotracker">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Duotracker: live Duolingo progress">
+<meta property="og:description" content="Today's lessons, streak and projected section finish dates, refreshed every 5 minutes.">
+<meta property="og:url" content="__PAGE_URL__">
+<meta property="og:image" content="__PAGE_URL__og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+:root {
+  color-scheme: light;
+  --page: #f2f5f6;
+  --card: #ffffff;
+  --card-2: #f5f7f8;
+  --seg-on: #ffffff;
+  --line: rgba(16, 32, 40, 0.08);
+  --grid: #e6ebed;
+  --axis: #c6d0d4;
+  --ink: #0f1b20;
+  --ink-2: #485961;
+  --muted: #74858d;
+  --good: #4aa802;
+  --good-track: #e3f3d4;
+  --good-text: #2e7700;
+  --minutes: #1593d1;
+  --minutes-track: #d7edf9;
+  --bad-text: #c0392b;
+  --warn: #c77700;
+  --bar-base: #c2cdd2;
+  --target: #0f1b20;
+  --live: #58cc02;
+  --h0: #e7ecee; --h1: #d3eebb; --h2: #a3da6e; --h3: #6dbf28; --h4: #3d8f00;
+  --shadow: 0 1px 2px rgba(15, 27, 32, 0.04), 0 12px 32px -16px rgba(15, 27, 32, 0.16);
+  --glow: rgba(88, 204, 2, 0.16);
+  --glow-2: rgba(21, 147, 209, 0.10);
+  --tip-bg: #0f1b20; --tip-ink: #ffffff; --tip-ink-2: #b9c7cd;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0b1114;
+    --card: #131c21;
+    --card-2: #19242a;
+    --seg-on: #283840;
+    --line: rgba(255, 255, 255, 0.07);
+    --grid: #212d34;
+    --axis: #34444c;
+    --ink: #edf3f5;
+    --ink-2: #b1bfc5;
+    --muted: #7e9098;
+    --good: #4aad02;
+    --good-track: #1d3317;
+    --good-text: #6fd12a;
+    --minutes: #1897d4;
+    --minutes-track: #13303f;
+    --bad-text: #ff7a6e;
+    --warn: #ffb020;
+    --bar-base: #34464f;
+    --target: #edf3f5;
+    --h0: #1a252b; --h1: #1c3a16; --h2: #2a6511; --h3: #3f950a; --h4: #62cc13;
+    --shadow: none;
+    --glow: rgba(88, 204, 2, 0.13);
+    --glow-2: rgba(24, 151, 212, 0.08);
+    --tip-bg: #edf3f5; --tip-ink: #0f1b20; --tip-ink-2: #485961;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0b1114; --card: #131c21; --card-2: #19242a; --seg-on: #283840;
+  --line: rgba(255, 255, 255, 0.07); --grid: #212d34; --axis: #34444c;
+  --ink: #edf3f5; --ink-2: #b1bfc5; --muted: #7e9098;
+  --good: #4aad02; --good-track: #1d3317; --good-text: #6fd12a;
+  --minutes: #1897d4; --minutes-track: #13303f;
+  --bad-text: #ff7a6e; --warn: #ffb020; --bar-base: #34464f; --target: #edf3f5;
+  --h0: #1a252b; --h1: #1c3a16; --h2: #2a6511; --h3: #3f950a; --h4: #62cc13;
+  --shadow: none; --glow: rgba(88, 204, 2, 0.13); --glow-2: rgba(24, 151, 212, 0.08);
+  --tip-bg: #edf3f5; --tip-ink: #0f1b20; --tip-ink-2: #485961;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--page); color: var(--ink);
+  font: 15px/1.45 ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+a { color: inherit; }
+button { font: inherit; }
+:focus-visible { outline: 2px solid var(--minutes); outline-offset: 2px; border-radius: 6px; }
+
+/* ---------- top bar ---------- */
+.top {
+  position: sticky; top: 0; z-index: 20;
+  padding-top: env(safe-area-inset-top);
+  background: var(--page);
+  background: color-mix(in srgb, var(--page) 84%, transparent);
+  -webkit-backdrop-filter: saturate(1.6) blur(18px); backdrop-filter: saturate(1.6) blur(18px);
+  border-bottom: 1px solid transparent; transition: border-color .2s;
+}
+.top.scrolled { border-bottom-color: var(--line); }
+.top-in {
+  max-width: 1120px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
+}
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.mark { width: 38px; height: 38px; flex: 0 0 auto; display: block; }
+.brand-text { min-width: 0; }
+.eyebrow { font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 1px 0 0; font-size: 20px; line-height: 1.15; font-weight: 800; letter-spacing: -.01em; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.code { font-size: 11px; font-weight: 800; letter-spacing: .04em; padding: 2px 6px; border-radius: 6px; background: var(--card-2); border: 1px solid var(--line); color: var(--ink-2); }
+.from { font-size: 13px; font-weight: 600; color: var(--muted); }
+.live {
+  display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto;
+  border: 1px solid var(--line); background: var(--card); color: var(--ink-2);
+  font-size: 13px; font-weight: 700; padding: 7px 13px; border-radius: 999px; cursor: pointer;
+  min-height: 36px; white-space: nowrap; box-shadow: var(--shadow);
+}
+.live .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); position: relative; flex: 0 0 auto; }
+.live.fresh .dot { background: var(--live); }
+.live.fresh .dot::after {
+  content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--live);
+  animation: ping 2.4s cubic-bezier(0, 0, .2, 1) infinite;
+}
+.live.stale .dot { background: var(--warn); }
+.live.busy .dot { animation: blink .7s ease-in-out infinite alternate; }
+.live.flash { animation: flash 1.4s ease-out; }
+@keyframes ping { 0% { transform: scale(.5); opacity: .9; } 80%, 100% { transform: scale(1.9); opacity: 0; } }
+@keyframes blink { to { opacity: .25; } }
+@keyframes flash { 0% { box-shadow: 0 0 0 0 var(--glow), var(--shadow); border-color: var(--live); } 100% { box-shadow: 0 0 0 14px transparent, var(--shadow); } }
+
+/* ---------- layout ---------- */
+main {
+  max-width: 1120px; margin: 0 auto;
+  padding: 6px max(16px, env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+.grid { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+.card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 22px;
+  padding: 18px; box-shadow: var(--shadow); min-width: 0;
+}
+.card h2 { font-size: 16px; font-weight: 800; margin: 0; letter-spacing: -.01em; }
+.card-head { display: flex; justify-content: space-between; align-items: center; gap: 10px 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.card-head p { margin: 2px 0 0; font-size: 12.5px; color: var(--muted); }
+
+/* ---------- hero ---------- */
+.hero {
+  position: relative; overflow: hidden;
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 18px; align-items: center; padding: 20px;
+  background:
+    radial-gradient(110% 85% at 0% 0%, var(--glow), transparent 60%),
+    radial-gradient(90% 70% at 100% 100%, var(--glow-2), transparent 60%),
+    var(--card);
+}
+.ring-wrap { position: relative; width: 156px; height: 156px; }
+.ring-wrap svg { width: 100%; height: 100%; display: block; transform: rotate(-90deg); overflow: visible; }
+.ring-track, .ring-val { fill: none; }
+.ring-val { stroke-linecap: round; transition: stroke-dashoffset 1.2s cubic-bezier(.2, .8, .2, 1); }
+.ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.hero-num { font-size: 50px; font-weight: 800; line-height: 1; letter-spacing: -.035em; }
+.hero-num.long { font-size: 38px; }
+.ring-cap { font-size: 12px; font-weight: 700; color: var(--muted); margin-top: 3px; }
+.keys { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; }
+.keys li { display: grid; grid-template-columns: 12px minmax(0, 1fr); column-gap: 10px; align-items: center; }
+.key { width: 12px; height: 12px; border-radius: 4px; }
+.key.lessons { background: var(--good); }
+.key.minutes { background: var(--minutes); }
+.kv { font-size: 22px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+.kv .of { font-size: 15px; color: var(--muted); font-weight: 700; letter-spacing: 0; }
+.kl { grid-column: 2; font-size: 12px; color: var(--muted); font-weight: 600; }
+.chips { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.chip {
+  display: inline-flex; align-items: baseline; padding: 6px 11px; border-radius: 999px;
+  background: var(--card-2); border: 1px solid var(--line); font-size: 13px; font-weight: 700; white-space: nowrap; color: var(--ink);
+}
+.chip small { color: var(--muted); font-weight: 600; font-size: 12px; margin-left: 5px; }
+.chip.warn { border-color: color-mix(in srgb, var(--warn) 55%, transparent); }
+.pace {
+  grid-column: 1 / -1; margin: 14px 0 0; padding-top: 14px; border-top: 1px solid var(--line);
+  color: var(--ink-2); font-size: 14px; display: flex; justify-content: space-between; align-items: baseline; gap: 4px 12px; flex-wrap: wrap;
+}
+.pace b { color: var(--ink); }
+.pace .right { color: var(--muted); font-size: 13px; }
+
+/* ---------- milestones ---------- */
+.milestones { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(152px, 1fr)); }
+.ms { display: flex; flex-direction: column; gap: 6px; padding: 16px; }
+.ms-head { display: flex; align-items: center; gap: 6px; justify-content: space-between; }
+.tag { font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 6px; background: var(--good-track); color: var(--good-text); letter-spacing: .02em; }
+.ms-date { font-size: clamp(24px, 7vw, 30px); font-weight: 800; letter-spacing: -.03em; line-height: 1.05; margin-top: 4px; }
+.ms-date .dm { white-space: nowrap; margin-right: 6px; }
+.ms-date .yr { display: inline-block; font-size: 0.56em; color: var(--muted); font-weight: 700; letter-spacing: -.01em; }
+.ms-in { color: var(--ink-2); font-size: 13.5px; font-weight: 600; }
+.ms-in b { color: var(--ink); }
+.ms-left { color: var(--muted); font-size: 12.5px; font-weight: 600; margin-top: -2px; }
+.meter { height: 8px; border-radius: 999px; background: var(--good-track); overflow: hidden; margin-top: 6px; }
+.meter > i { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--good); transition: width 1.1s cubic-bezier(.2, .8, .2, 1); }
+.meter.thin { height: 6px; }
+.meter.blue { background: var(--minutes-track); }
+.meter.blue > i { background: var(--minutes); }
+.ms-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); font-weight: 600; }
+.whatif { margin-top: auto; padding: 9px 11px; border-radius: 13px; background: var(--card-2); border: 1px solid var(--line); font-size: 12.5px; color: var(--ink-2); line-height: 1.4; }
+.whatif b { color: var(--ink); font-size: 14px; }
+.wi-l { color: var(--muted); font-weight: 600; font-size: 12px; }
+.wi-s { color: var(--good-text); font-weight: 700; font-size: 12px; }
+
+/* ---------- KPI tiles ---------- */
+.kpis { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.kpi { padding: 16px; }
+.kpi-v { font-size: 28px; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; margin-top: 6px; }
+.kpi-v .unit { font-size: 14px; color: var(--muted); font-weight: 700; letter-spacing: 0; margin-left: 3px; }
+.kpi-s { font-size: 12.5px; color: var(--muted); margin-top: 4px; font-weight: 600; }
+.delta { font-weight: 700; }
+.delta.up { color: var(--good-text); }
+.delta.down { color: var(--bad-text); }
+
+/* ---------- segmented control ---------- */
+.seg { display: inline-flex; background: var(--card-2); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+.seg button {
+  appearance: none; border: 0; background: transparent; color: var(--ink-2); font-size: 13px; font-weight: 700;
+  padding: 6px 13px; border-radius: 999px; cursor: pointer; min-height: 32px; transition: background .2s, color .2s;
+}
+.seg button[aria-selected="true"] { background: var(--seg-on); color: var(--ink); box-shadow: 0 1px 3px rgba(0, 0, 0, .12); }
+
+/* ---------- charts ---------- */
+.chart { position: relative; min-height: 230px; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.chart svg, .heat svg { display: block; overflow: visible; }
+.chart.loading, .heat.loading { opacity: .5; transition: opacity .2s; }
+.gl { stroke: var(--grid); stroke-width: 1; shape-rendering: crispEdges; }
+.ax { stroke: var(--axis); stroke-width: 1; shape-rendering: crispEdges; }
+.tick { fill: var(--muted); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.bar { transition: opacity .15s, filter .15s; }
+.bar.good { fill: var(--good); }
+.bar.base { fill: var(--bar-base); }
+.bar.partial { opacity: .6; }
+.bar.hot { filter: brightness(1.18) saturate(1.1); opacity: 1; }
+.grow { transform-box: fill-box; transform-origin: 50% 100%; animation: grow .7s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes grow { from { transform: scaleY(0); } }
+.target { stroke: var(--target); stroke-width: 1.25; stroke-dasharray: 4 4; opacity: .5; }
+.cap { fill: var(--ink); font-size: 12px; font-weight: 800; }
+.cap-sub { fill: var(--muted); font-size: 11px; font-weight: 600; }
+.hit { fill: transparent; cursor: pointer; outline: none; }
+.line { fill: none; stroke: var(--good); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.area { fill: var(--good); opacity: .1; }
+.dot-end { fill: var(--good); stroke: var(--card); stroke-width: 2; }
+.cross { stroke: var(--axis); stroke-width: 1; }
+.draw { stroke-dasharray: var(--len); stroke-dashoffset: var(--len); animation: draw 1.1s cubic-bezier(.2, .8, .2, 1) forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.fade { animation: fade .8s ease-out both; }
+@keyframes fade { from { opacity: 0; } }
+.legend { display: flex; gap: 8px 16px; flex-wrap: wrap; color: var(--ink-2); font-size: 12.5px; font-weight: 600; margin-top: 10px; }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.sw.good { background: var(--good); }
+.sw.base { background: var(--bar-base); }
+.sw.dash { width: 16px; height: 0; border-top: 2px dashed var(--target); opacity: .55; border-radius: 0; }
+details.table { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+details.table summary { cursor: pointer; font-size: 12.5px; font-weight: 700; color: var(--muted); list-style: none; }
+details.table summary::-webkit-details-marker { display: none; }
+details.table summary::before { content: "▸ "; }
+details.table[open] summary::before { content: "▾ "; }
+.tbl-wrap { max-height: 260px; overflow: auto; margin-top: 8px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 700; font-size: 12px; position: sticky; top: 0; background: var(--card); }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---------- heatmap ---------- */
+.heat { display: flex; justify-content: flex-start; }
+.hm { transition: stroke-width .1s; }
+.hm.l0 { fill: var(--h0); } .hm.l1 { fill: var(--h1); } .hm.l2 { fill: var(--h2); } .hm.l3 { fill: var(--h3); } .hm.l4 { fill: var(--h4); }
+.hm.hot { stroke: var(--ink); stroke-width: 1.5; }
+.hm.today { stroke: var(--ink-2); stroke-width: 1.5; stroke-dasharray: 2 2; }
+.hm-legend { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 12px; }
+.hm-legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.hm-legend .sp { width: 10px; }
+.heat-wrap { display: flex; flex-wrap: wrap; gap: 18px 24px; align-items: flex-start; }
+.heat-col { flex: 1 1 280px; min-width: 0; }
+.heat-stats { flex: 1 1 220px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.heat-stats > div { background: var(--card-2); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; min-width: 0; }
+.heat-stats dt { font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+.heat-stats dd { margin: 3px 0 0; font-size: 21px; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; }
+.heat-stats dd small { display: block; font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- course path ---------- */
+.path { list-style: none; margin: 0; padding: 0; }
+.sec { display: grid; grid-template-columns: 32px minmax(0, 1fr); column-gap: 12px; padding: 9px 0; position: relative; }
+.sec::before { content: ""; position: absolute; left: 15px; top: 43px; bottom: -9px; width: 2px; background: var(--grid); border-radius: 2px; }
+.sec:last-child::before { display: none; }
+.sec.is-done::before { background: var(--good); }
+.badge {
+  width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 14px;
+  background: var(--card-2); border: 2px solid var(--grid); color: var(--muted); position: relative; z-index: 1;
+}
+.is-done .badge { background: var(--good); border-color: var(--good); color: #fff; }
+.is-active .badge { background: var(--card); border-color: var(--good); color: var(--good-text); box-shadow: 0 0 0 5px var(--glow); }
+.sec-top { display: flex; align-items: center; gap: 8px; min-height: 32px; flex-wrap: wrap; }
+.sec-name { font-weight: 800; font-size: 14.5px; }
+.sec-pct { margin-left: auto; font-size: 13px; color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+.is-active .sec-pct { color: var(--good-text); }
+.sec-body { grid-column: 2; }
+.sec .meter { margin: 2px 0 6px; }
+.sec-sub { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.is-active .sec-sub { color: var(--ink-2); }
+.here { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #fff; background: var(--good); padding: 2px 7px; border-radius: 6px; }
+.eta { color: var(--ink-2); font-weight: 700; }
+
+/* ---------- tooltip ---------- */
+.tip {
+  position: fixed; left: 0; top: 0; z-index: 50; pointer-events: none;
+  background: var(--tip-bg); color: var(--tip-ink); border-radius: 12px; padding: 8px 11px;
+  font-size: 12.5px; line-height: 1.4; box-shadow: 0 10px 30px rgba(0, 0, 0, .28); max-width: 240px;
+  opacity: 0; transition: opacity .12s;
+}
+.tip.on { opacity: 1; }
+.tip-v { font-weight: 800; font-size: 14.5px; }
+.tip-l { color: var(--tip-ink-2); font-weight: 600; }
+
+/* ---------- footer ---------- */
+footer { color: var(--muted); font-size: 12.5px; line-height: 1.55; margin-top: 22px; padding: 0 4px; }
+footer p { margin: 0 0 6px; }
+footer a { color: var(--ink-2); font-weight: 700; text-decoration: none; border-bottom: 1px solid var(--line); }
+footer a:hover { border-bottom-color: var(--ink-2); }
+
+/* ---------- responsive ---------- */
+@media (max-width: 519px) { .from { display: none; } }
+@media (max-width: 359px) {
+  .hero { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; }
+  .keys li { justify-content: center; }
+  .chips { justify-content: center; }
+  .from { display: none; }
+}
+@media (min-width: 720px) {
+  main { padding-top: 10px; }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .hero, .milestones, .kpis, .activity { grid-column: span 2; }
+  .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+  .milestones { gap: 16px; }
+  .ring-wrap { width: 172px; height: 172px; }
+  .hero-num { font-size: 56px; }
+  h1 { font-size: 22px; }
+}
+@media (min-width: 1040px) {
+  .grid { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 18px; }
+  .hero { grid-column: span 5; }
+  .milestones { grid-column: span 7; gap: 18px; }
+  .kpis { grid-column: span 12; gap: 18px; }
+  .activity { grid-column: span 8; }
+  .path-card { grid-column: 9 / span 4; grid-row: 3 / span 2; }
+  .consistency { grid-column: span 8; }
+  .ms-date { font-size: 36px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<header class="top" id="top">
+  <div class="top-in">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
+        <rect width="40" height="40" rx="12" fill="#58cc02"/>
+        <circle cx="20" cy="20" r="10.5" fill="none" stroke="#ffffff" stroke-opacity=".32" stroke-width="5"/>
+        <path d="M20 9.5a10.5 10.5 0 1 1-10.5 10.5" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
+      </svg>
+      <div class="brand-text">
+        <div class="eyebrow">Duotracker</div>
+        <h1><span id="lang">Duolingo</span><span class="code" id="code" hidden></span><span class="from" id="from"></span></h1>
+      </div>
+    </div>
+    <button class="live" id="live" type="button" aria-live="polite" title="Tap to check for new data">
+      <i class="dot"></i><span id="liveText">Loading…</span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <div class="grid" id="app">
+    <section class="card hero" aria-labelledby="todayLabel">
+      <div class="ring-wrap">
+        <svg viewBox="0 0 160 160" id="rings" role="img"></svg>
+        <div class="ring-center"><div class="hero-num" id="heroNum">0</div><div class="ring-cap">lessons</div></div>
+      </div>
+      <div>
+        <div class="eyebrow" id="todayLabel">Today</div>
+        <ul class="keys">
+          <li><i class="key lessons"></i><span class="kv"><span id="kLessons">0</span> <span class="of" id="kLessonsOf"></span></span><span class="kl">lessons</span></li>
+          <li><i class="key minutes"></i><span class="kv"><span id="kMinutes">0</span> <span class="of" id="kMinutesOf"></span></span><span class="kl">minutes</span></li>
+        </ul>
+      </div>
+      <div class="chips" id="chips"></div>
+      <p class="pace" id="pace"></p>
+    </section>
+
+    <section class="milestones" id="milestones" aria-label="Projected section finish dates"></section>
+
+    <section class="kpis" id="kpis" aria-label="Key numbers"></section>
+
+    <section class="card activity" aria-labelledby="actTitle">
+      <div class="card-head">
+        <div><h2 id="actTitle">Activity</h2><p id="actSub"></p></div>
+        <div class="seg" role="tablist" aria-label="Chart view">
+          <button type="button" role="tab" data-view="weeks" aria-selected="true">Weeks</button>
+          <button type="button" role="tab" data-view="days" aria-selected="false">Days</button>
+          <button type="button" role="tab" data-view="total" aria-selected="false">Total</button>
+        </div>
+      </div>
+      <div class="chart" id="chart"></div>
+      <div class="legend" id="legend"></div>
+      <details class="table"><summary>Show as table</summary><div class="tbl-wrap"><table id="table"></table></div></details>
+    </section>
+
+    <section class="card path-card" aria-labelledby="pathTitle">
+      <div class="card-head"><div><h2 id="pathTitle">Course path</h2><p id="pathSub"></p></div></div>
+      <ol class="path" id="path"></ol>
+    </section>
+
+    <section class="card consistency" aria-labelledby="heatTitle">
+      <div class="card-head"><div><h2 id="heatTitle">Consistency</h2><p id="heatSub"></p></div></div>
+      <div class="heat-wrap">
+        <div class="heat-col"><div class="heat" id="heat"></div><div class="hm-legend" id="heatLegend"></div></div>
+        <dl class="heat-stats" id="heatStats"></dl>
+      </div>
+    </section>
+  </div>
+
+  <footer id="footer">
+    <noscript><p>This dashboard needs JavaScript to draw its charts.</p></noscript>
+  </footer>
+</main>
+
+<div class="tip" id="tip" role="status" aria-live="polite"></div>
+
+<script id="seed" type="application/json">__DUO_SEED__</script>
+<script>
+(() => {
+  "use strict";
+
+  // ---------- setup ----------
+  const NS = "http://www.w3.org/2000/svg";
+  const DAY = 864e5;
+  const POLL_MS = 60 * 1000;
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const nf = new Intl.NumberFormat("en-GB");
+  const nf1 = new Intl.NumberFormat("en-GB", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const $ = (id) => document.getElementById(id);
+
+  let data = null;
+  try { data = JSON.parse($("seed").textContent); } catch (e) { data = null; }
+  let view = "weeks";
+  let fetching = false;
+  let lastCheck = 0;
+  let D = null;                       // derived view model of `data`
+
+  // ---------- helpers ----------
+  const parseDay = (iso) => { const [y, m, d] = iso.split("-").map(Number); return new Date(Date.UTC(y, m - 1, d)); };
+  const addDays = (dt, n) => new Date(dt.getTime() + n * DAY);
+  const isoDay = (dt) => dt.toISOString().slice(0, 10);
+  const monday = (dt) => addDays(dt, -((dt.getUTCDay() + 6) % 7));
+  const fmtD = (dt, o) => dt.toLocaleDateString("en-GB", Object.assign({ timeZone: "UTC" }, o));
+  const dayMonth = (dt) => fmtD(dt, { day: "numeric", month: "short" });
+  const fullDate = (dt) => fmtD(dt, { day: "numeric", month: "short", year: "numeric" });
+  const weekdayDate = (dt) => fmtD(dt, { weekday: "short", day: "numeric", month: "short" });
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const pct = (a, b) => (b > 0 ? Math.round((100 * a) / b) : 0);
+  const plural = (n, w) => `${nf.format(n)} ${w}${n === 1 ? "" : "s"}`;
+  const secRange = (ns) => {
+    if (!ns.length) return "";
+    if (ns.length === 1) return `Section ${ns[0]}`;
+    const contiguous = ns[ns.length - 1] - ns[0] === ns.length - 1;
+    return contiguous ? `Sections ${ns[0]}–${ns[ns.length - 1]}` : `Sections ${ns.join(", ")}`;
+  };
+
+  function h(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function s(tag, attrs, parent) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function txt(parent, attrs, text) { const t = s("text", attrs, parent); t.textContent = text; return t; }
+  // Rich text without innerHTML: parts are strings or {b: "bold"} / {c: "class", t: "text"}.
+  function rich(node, parts) {
+    node.replaceChildren();
+    for (const p of parts) {
+      if (p == null || p === false) continue;
+      if (typeof p === "string") node.appendChild(document.createTextNode(p));
+      else if (p.b != null) node.appendChild(h("b", null, p.b));
+      else node.appendChild(h("span", p.c, p.t));
+    }
+    return node;
+  }
+  function nowInTz(tz) {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+    }).formatToParts(new Date());
+    const g = (t) => parts.find((p) => p.type === t).value;
+    return { day: `${g("year")}-${g("month")}-${g("day")}`, hours: Number(g("hour")) + Number(g("minute")) / 60 };
+  }
+  function hm(hours) {
+    const m = Math.max(0, Math.round(hours * 60));
+    return m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`;
+  }
+  function niceStep(max, n) {
+    const raw = max / n, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+    return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p;
+  }
+  const tickFmt = (v, max) => (max >= 10000 && v >= 1000 ? `${nf1.format(v / 1000).replace(/\.0$/, "")}K` : nf.format(v));
+  function barPath(x, y, w, hgt, r) {
+    r = Math.max(0, Math.min(r, w / 2, hgt));
+    return `M${x},${y + hgt}V${y + r}A${r},${r} 0 0 1 ${x + r},${y}H${x + w - r}A${r},${r} 0 0 1 ${x + w},${y + r}V${y + hgt}Z`;
+  }
+  function countUp(node, to, fmt, animate) {
+    const from = animate && !reduceMotion ? Number(node.dataset.v || 0) : to;
+    node.dataset.v = to;
+    if (from === to) { node.textContent = fmt(to); return; }
+    const t0 = performance.now(), dur = 900;
+    const step = (t) => {
+      const p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      node.textContent = fmt(from + (to - from) * e);
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+  const fInt = (v) => nf.format(Math.round(v));
+  const f1 = (v) => nf1.format(v);
+
+  // ---------- tooltip ----------
+  const tip = $("tip");
+  let hotMark = null;
+  function showTip(lines, anchor, mark) {
+    tip.replaceChildren();
+    lines.forEach((ln, i) => tip.appendChild(h("div", i === 0 ? "tip-v" : "tip-l", ln)));
+    if (hotMark && hotMark !== mark) hotMark.classList.remove("hot");
+    hotMark = mark || null;
+    if (hotMark) hotMark.classList.add("hot");
+    const r = anchor.getBoundingClientRect();
+    tip.classList.add("on");
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    let x = r.left + r.width / 2 - tw / 2, y = r.top - th - 10;
+    x = clamp(x, 8, innerWidth - tw - 8);
+    if (y < 64) y = Math.min(r.bottom + 10, innerHeight - th - 8);
+    tip.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+  }
+  function hideTip() {
+    tip.classList.remove("on");
+    if (hotMark) { hotMark.classList.remove("hot"); hotMark = null; }
+  }
+  function bindTip(target, lines, anchor, mark) {
+    const show = () => showTip(lines(), anchor || target, mark);
+    target.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") show(); });
+    target.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") hideTip(); });
+    target.addEventListener("click", (e) => { e.stopPropagation(); show(); });
+    target.addEventListener("focus", show);
+    target.addEventListener("blur", hideTip);
+  }
+  document.addEventListener("click", hideTip);
+  addEventListener("scroll", hideTip, { passive: true });
+
+  // ---------- view model ----------
+  function derive(d) {
+    const start = parseDay(d.history.start);
+    const days = d.history.lessons.map((v, i) => ({
+      date: addDays(start, i), lessons: v, minutes: d.history.minutes[i] || 0, xp: d.history.xp[i] || 0,
+    }));
+    const todayDate = parseDay(d.today);
+    const local = nowInTz(d.tz);
+    const chartStart = parseDay(d.chartStart);
+    const firstMon = monday(chartStart);
+    const byWeek = new Map();
+    for (const x of days) {
+      if (x.date < firstMon) continue;
+      const m = monday(x.date), k = isoDay(m);
+      if (!byWeek.has(k)) byWeek.set(k, { start: m, lessons: 0, minutes: 0 });
+      const w = byWeek.get(k);
+      w.lessons += x.lessons; w.minutes += x.minutes;
+    }
+    const weeks = [...byWeek.values()];
+    weeks.forEach((w) => { w.partial = addDays(w.start, 6) >= todayDate; });
+    return { d, days, weeks, todayDate, chartStart, local, staleDay: local.day > d.today };
+  }
+
+  // ---------- header ----------
+  function renderHeader() {
+    const c = D.d.course;
+    $("lang").textContent = c.language || "Duolingo";
+    const code = $("code");
+    code.hidden = !c.code;
+    code.textContent = c.code || "";
+    $("from").textContent = c.from ? `from ${c.from}` : "";
+    document.title = `Duotracker · ${c.language || "Duolingo"}`;
+  }
+
+  // ---------- hero ----------
+  function ring(svg, rings, animate) {
+    svg.replaceChildren();
+    const stroke = 15, gap = 5;
+    rings.forEach((rg, i) => {
+      const r = 80 - stroke / 2 - i * (stroke + gap);
+      const c = 2 * Math.PI * r;
+      const p = rg.max > 0 ? clamp(rg.v / rg.max, 0, 1) : 0;
+      s("circle", { cx: 80, cy: 80, r, class: "ring-track", stroke: `var(${rg.track})`, "stroke-width": stroke }, svg);
+      const arc = s("circle", {
+        cx: 80, cy: 80, r, class: "ring-val", stroke: `var(${rg.color})`, "stroke-width": stroke,
+        "stroke-dasharray": c.toFixed(2), "stroke-dashoffset": (animate && !reduceMotion ? c : c * (1 - p)).toFixed(2),
+      }, svg);
+      if (p <= 0) arc.setAttribute("stroke-opacity", "0");
+      if (animate && !reduceMotion) requestAnimationFrame(() => requestAnimationFrame(() => arc.setAttribute("stroke-dashoffset", (c * (1 - p)).toFixed(2))));
+    });
+  }
+
+  function renderHero(animate) {
+    const d = D.d, t = d.todayStats, T = d.targets;
+    $("todayLabel").textContent = D.staleDay ? "Yesterday · final" : "Today";
+    ring($("rings"), [
+      { v: t.lessons, max: T.dailyLessons, color: "--good", track: "--good-track" },
+      { v: t.minutes, max: T.dailyMinutes, color: "--minutes", track: "--minutes-track" },
+    ], animate);
+    $("rings").setAttribute("aria-label",
+      `${t.lessons} of ${T.dailyLessons} lessons and ${t.minutes} of ${T.dailyMinutes} minutes ${D.staleDay ? "yesterday" : "today"}`);
+    const hn = $("heroNum");
+    hn.classList.toggle("long", t.lessons >= 100);
+    countUp(hn, t.lessons, fInt, animate);
+    countUp($("kLessons"), t.lessons, fInt, animate);
+    countUp($("kMinutes"), t.minutes, fInt, animate);
+    $("kLessonsOf").textContent = `/ ${T.dailyLessons}`;
+    $("kMinutesOf").textContent = `/ ${T.dailyMinutes}`;
+
+    const chips = $("chips");
+    chips.replaceChildren();
+    if (d.streak && d.streak.current != null) {
+      const atRisk = !t.extended && !D.staleDay;
+      const chip = h("span", "chip" + (atRisk ? " warn" : ""));
+      chip.appendChild(rich(h("span"), ["🔥 ", { b: nf.format(d.streak.current) }, "-day streak"]));
+      if (atRisk) chip.appendChild(h("small", null, "· extend it today"));
+      else if (d.streak.longest) chip.appendChild(h("small", null, `· best ${nf.format(d.streak.longest)}`));
+      chips.appendChild(chip);
+    }
+    const xpChip = h("span", "chip");
+    xpChip.appendChild(rich(h("span"), ["⚡ ", { b: nf.format(t.xp) }, ` XP ${D.staleDay ? "yesterday" : "today"}`]));
+    chips.appendChild(xpChip);
+
+    const pace = $("pace");
+    pace.replaceChildren();
+    const hoursLeft = 24 - D.local.hours;
+    if (D.staleDay) {
+      pace.appendChild(h("span", null, "New day: no lessons logged since midnight yet."));
+    } else if (t.lessons >= T.dailyLessons) {
+      const extra = t.lessons - T.dailyLessons;
+      pace.appendChild(rich(h("span"), ["🎉 ", { b: "Daily target hit" }, extra > 0 ? ` · +${plural(extra, "bonus lesson")}` : ""]));
+      pace.appendChild(h("span", "right", `${hm(hoursLeft)} left today`));
+    } else {
+      const togo = T.dailyLessons - t.lessons;
+      const perHour = togo / Math.max(hoursLeft, 0.5);
+      pace.appendChild(rich(h("span"), [{ b: nf.format(togo) }, ` lesson${togo === 1 ? "" : "s"} to go`,
+        hoursLeft > 1 ? ` · about ${f1(perHour)} an hour` : ""]));
+      pace.appendChild(h("span", "right", `${hm(hoursLeft)} left today`));
+    }
+  }
+
+  // ---------- milestones ----------
+  function renderMilestones(animate) {
+    const d = D.d, host = $("milestones");
+    host.replaceChildren();
+    const rate = d.stats.rate7, T = d.targets.dailyLessons;
+    for (const p of d.projections) {
+      const card = h("article", "card ms");
+      const head = h("div", "ms-head");
+      head.appendChild(h("span", "eyebrow", p.label || p.name));
+      card.appendChild(head);
+      const range = secRange(p.sections || []);
+      if (p.missing) {
+        card.appendChild(h("div", "ms-date", "—"));
+        card.appendChild(h("div", "ms-in", "Not in the current course"));
+        card.appendChild(h("div", "ms-left", range));
+      } else if (p.finished) {
+        card.appendChild(h("div", "ms-date", "Done ✓"));
+        card.appendChild(h("div", "ms-in", "Every lesson finished"));
+        card.appendChild(h("div", "ms-left", range));
+      } else if (!p.date) {
+        card.appendChild(h("div", "ms-date", "—"));
+        card.appendChild(h("div", "ms-in", "No lessons in the last 7 days"));
+        card.appendChild(h("div", "ms-left", `${range} · ${nf.format(p.through)} lessons to go`));
+      } else {
+        const dt = parseDay(p.date);
+        const big = h("div", "ms-date");
+        big.appendChild(h("span", "dm", dayMonth(dt)));
+        big.appendChild(h("span", "yr", String(dt.getUTCFullYear())));
+        card.appendChild(big);
+        card.appendChild(rich(h("div", "ms-in"), ["Finish in ", { b: plural(p.days, "day") }]));
+        card.appendChild(h("div", "ms-left", `${range} · ${nf.format(p.through)} lessons to go`));
+      }
+      if (!p.missing) {
+        const m = h("div", "meter"), fill = h("i");
+        m.appendChild(fill); card.appendChild(m);
+        const w = p.total ? (100 * p.done) / p.total : 0;
+        const wv = `${w > 0 ? Math.max(w, 1.5) : 0}%`;
+        if (animate && !reduceMotion) requestAnimationFrame(() => requestAnimationFrame(() => { fill.style.width = wv; }));
+        else fill.style.width = wv;
+        const meta = h("div", "ms-meta");
+        meta.appendChild(h("span", null, `${nf.format(p.done)} / ${nf.format(p.total)} lessons`));
+        meta.appendChild(h("span", null, `${pct(p.done, p.total)}%`));
+        card.appendChild(meta);
+      }
+      if (p.date && p.targetDate && p.targetDays < p.days) {
+        const sooner = p.days - p.targetDays;
+        const when = sooner >= 540 ? `${nf1.format(sooner / 365.25)} years sooner`
+          : sooner >= 60 ? `${Math.round(sooner / 30.44)} months sooner` : `${plural(sooner, "day")} sooner`;
+        const wi = h("div", "whatif");
+        wi.appendChild(h("div", "wi-l", `⚡ At your ${T}/day target`));
+        wi.appendChild(rich(h("div"), [{ b: fullDate(parseDay(p.targetDate)) }]));
+        wi.appendChild(h("div", "wi-s", when));
+        card.appendChild(wi);
+      }
+      host.appendChild(card);
+    }
+    if (!d.projections.length) host.hidden = true;
+  }
+
+  // ---------- KPI tiles ----------
+  function renderKpis(animate) {
+    const d = D.d, st = d.stats, T = d.targets, host = $("kpis");
+    host.replaceChildren();
+    const tile = (label, value, fmt, unit, sub) => {
+      const c = h("article", "card kpi");
+      c.appendChild(h("div", "eyebrow", label));
+      const v = h("div", "kpi-v"), num = h("span");
+      v.appendChild(num);
+      if (unit) v.appendChild(h("span", "unit", unit));
+      c.appendChild(v);
+      countUp(num, value, fmt, animate);
+      if (sub) c.appendChild(sub);
+      host.appendChild(c);
+      return c;
+    };
+    // This week
+    const wk = tile("This week", st.week, fInt, `/ ${nf.format(T.weeklyLessons)}`, h("div", "kpi-s", `${pct(st.week, T.weeklyLessons)}% of weekly target`));
+    const m = h("div", "meter thin"), fill = h("i");
+    m.appendChild(fill); wk.appendChild(m);
+    const wv = `${clamp((100 * st.week) / T.weeklyLessons, 0, 100)}%`;
+    if (animate && !reduceMotion) requestAnimationFrame(() => requestAnimationFrame(() => { fill.style.width = wv; }));
+    else fill.style.width = wv;
+    // Daily average + delta vs the 7 days before
+    const diff = st.rate7 - st.ratePrev7;
+    const sub = h("div", "kpi-s");
+    if (Math.abs(diff) >= 0.05) {
+      sub.appendChild(h("span", "delta " + (diff > 0 ? "up" : "down"), `${diff > 0 ? "▲" : "▼"} ${f1(Math.abs(diff))}`));
+      sub.appendChild(document.createTextNode(" vs prior 7 days"));
+    } else sub.textContent = "Flat vs prior 7 days";
+    tile("Daily average", st.rate7, f1, "/ day", sub);
+    // Course
+    const P = d.path;
+    tile("Course complete", pct(P.done, P.total), fInt, "%", h("div", "kpi-s", `${nf.format(P.done)} of ${nf.format(P.total)} lessons`));
+    // XP
+    tile("Total XP", d.totalXp || 0, fInt, "", h("div", "kpi-s", `+${nf.format(d.todayStats.xp)} ${D.staleDay ? "yesterday" : "today"}`));
+  }
+
+  // ---------- bar chart ----------
+  function barChart(host, o, animate) {
+    host.replaceChildren();
+    const W = Math.max(260, host.clientWidth), H = o.height;
+    const m = { l: 34, r: 6, t: 24, b: 26 };
+    const pw = W - m.l - m.r, ph = H - m.t - m.b;
+    const vmax = Math.max(o.target || 0, ...o.items.map((x) => x.value), 4);
+    const step = niceStep(vmax * 1.12, 4);
+    const ymax = Math.ceil((vmax * 1.12) / step) * step;
+    const Y = (v) => m.t + ph - (v / ymax) * ph;
+    const svg = s("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": o.aria }, host);
+
+    for (let v = 0; v <= ymax + 1e-9; v += step) {
+      s("line", { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), class: v === 0 ? "ax" : "gl" }, svg);
+      txt(svg, { x: m.l - 8, y: Y(v) + 4, class: "tick", "text-anchor": "end" }, tickFmt(v, ymax));
+    }
+    const n = o.items.length, slot = pw / n, bw = clamp(slot * 0.62, 2, 24);
+    const every = Math.max(1, Math.ceil(o.minLabelGap / slot));
+    const bars = s("g", {}, svg);
+    o.items.forEach((it, i) => {
+      const cx = m.l + slot * (i + 0.5), x = cx - bw / 2;
+      const hgt = it.value > 0 ? Math.max(3, Y(0) - Y(it.value)) : 2;
+      const bar = s("path", {
+        d: barPath(x, Y(0) - hgt, bw, hgt, it.value > 0 ? 4 : 1),
+        class: `bar ${it.hit ? "good" : "base"}${it.partial ? " partial" : ""}${animate && !reduceMotion ? " grow" : ""}`,
+      }, bars);
+      if (animate) bar.style.animationDelay = `${Math.min(i * 22, 500)}ms`;
+      if ((n - 1 - i) % every === 0) txt(svg, { x: cx, y: H - 7, class: "tick", "text-anchor": "middle" }, it.x);
+      const hit = s("rect", { x: m.l + slot * i, y: m.t, width: slot, height: ph, class: "hit", tabindex: 0, "aria-label": it.tip.join(", ") }, svg);
+      bindTip(hit, () => it.tip, bar, bar);
+    });
+    if (o.target) {
+      const yt = Y(o.target);
+      s("line", { x1: m.l, x2: W - m.r, y1: yt, y2: yt, class: "target" }, svg);
+    }
+    // direct label: the latest bar only
+    const last = o.items[n - 1];
+    if (last) {
+      const cx = m.l + slot * (n - 0.5);
+      const ty = Y(last.value) - 8;
+      const lab = txt(svg, { x: clamp(cx, m.l + 10, W - m.r - 4), y: ty, class: "cap", "text-anchor": cx > W - m.r - 24 ? "end" : "middle" }, nf.format(last.value));
+      if (animate && !reduceMotion) lab.classList.add("fade");
+    }
+  }
+
+  // ---------- line chart ----------
+  function lineChart(host, o, animate) {
+    host.replaceChildren();
+    const W = Math.max(260, host.clientWidth), H = o.height;
+    const m = { l: 42, r: 10, t: 24, b: 26 };
+    const pw = W - m.l - m.r, ph = H - m.t - m.b;
+    const pts = o.items, n = pts.length;
+    const vmax = Math.max(...pts.map((p) => p.value), 4);
+    const step = niceStep(vmax * 1.1, 4);
+    const ymax = Math.ceil((vmax * 1.1) / step) * step;
+    const X = (i) => m.l + (n > 1 ? (i / (n - 1)) * pw : pw / 2);
+    const Y = (v) => m.t + ph - (v / ymax) * ph;
+    const svg = s("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": o.aria }, host);
+    for (let v = 0; v <= ymax + 1e-9; v += step) {
+      s("line", { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), class: v === 0 ? "ax" : "gl" }, svg);
+      txt(svg, { x: m.l - 8, y: Y(v) + 4, class: "tick", "text-anchor": "end" }, tickFmt(v, ymax));
+    }
+    // month labels
+    let lastX = -1e9;
+    pts.forEach((p, i) => {
+      if (p.date.getUTCDate() !== 1 && i !== 0) return;
+      const x = X(i);
+      if (x - lastX < 44) return;
+      lastX = x;
+      txt(svg, { x, y: H - 7, class: "tick", "text-anchor": i === 0 ? "start" : "middle" }, fmtD(p.date, { month: "short" }));
+    });
+    const line = pts.map((p, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(p.value).toFixed(1)}`).join("");
+    const area = s("path", { d: `${line}L${X(n - 1).toFixed(1)},${Y(0)}L${X(0).toFixed(1)},${Y(0)}Z`, class: "area" + (animate && !reduceMotion ? " fade" : "") }, svg);
+    const path = s("path", { d: line, class: "line" }, svg);
+    if (animate && !reduceMotion) {
+      const len = path.getTotalLength();
+      path.style.setProperty("--len", len.toFixed(0));
+      path.classList.add("draw");
+    }
+    const lp = pts[n - 1];
+    s("circle", { cx: X(n - 1), cy: Y(lp.value), r: 4.5, class: "dot-end" }, svg);
+    txt(svg, { x: X(n - 1) - 8, y: Y(lp.value) - 10, class: "cap", "text-anchor": "end" }, nf.format(lp.value));
+    area.setAttribute("aria-hidden", "true");
+
+    // crosshair: snaps to the nearest day; drag horizontally on touch
+    const cross = s("line", { x1: 0, x2: 0, y1: m.t, y2: m.t + ph, class: "cross", visibility: "hidden" }, svg);
+    const dot = s("circle", { cx: 0, cy: 0, r: 4.5, class: "dot-end", visibility: "hidden" }, svg);
+    const overlay = s("rect", { x: m.l, y: m.t, width: pw, height: ph, class: "hit", tabindex: 0, "aria-label": o.aria }, svg);
+    let idx = n - 1;
+    const show = (i) => {
+      idx = clamp(i, 0, n - 1);
+      const p = pts[idx], x = X(idx), y = Y(p.value);
+      cross.setAttribute("x1", x); cross.setAttribute("x2", x); cross.setAttribute("visibility", "visible");
+      dot.setAttribute("cx", x); dot.setAttribute("cy", y); dot.setAttribute("visibility", "visible");
+      showTip(o.tip(p), dot);
+    };
+    const fromEvent = (e) => {
+      const r = svg.getBoundingClientRect();
+      return Math.round(((e.clientX - r.left - m.l) / pw) * (n - 1));
+    };
+    const hide = () => { cross.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); hideTip(); };
+    overlay.addEventListener("pointermove", (e) => show(fromEvent(e)));
+    overlay.addEventListener("pointerdown", (e) => show(fromEvent(e)));
+    overlay.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") hide(); });
+    overlay.addEventListener("click", (e) => e.stopPropagation());
+    overlay.addEventListener("focus", () => show(idx));
+    overlay.addEventListener("blur", hide);
+    overlay.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") { show(idx - 1); e.preventDefault(); }
+      if (e.key === "ArrowRight") { show(idx + 1); e.preventDefault(); }
+    });
+  }
+
+  // ---------- activity card ----------
+  function renderChart(animate) {
+    const d = D.d, T = d.targets, host = $("chart"), legend = $("legend");
+    const H = host.clientWidth >= 640 ? 270 : 230;
+    legend.replaceChildren();
+    const key = (cls, label) => { const sp = h("span"); sp.appendChild(h("i", "sw " + cls)); sp.appendChild(document.createTextNode(label)); legend.appendChild(sp); };
+    let rows, head;
+    if (view === "weeks") {
+      const items = D.weeks.map((w) => ({
+        value: w.lessons, hit: w.lessons >= T.weeklyLessons, partial: w.partial, x: dayMonth(w.start),
+        tip: [plural(w.lessons, "lesson"), `Week of ${dayMonth(w.start)}${w.partial ? " · so far" : ""}`,
+          w.lessons >= T.weeklyLessons ? "✓ Weekly target hit" : `${pct(w.lessons, T.weeklyLessons)}% of the ${T.weeklyLessons} target`],
+      }));
+      $("actSub").textContent = `Lessons per week since ${dayMonth(D.chartStart)}`;
+      barChart(host, { items, target: T.weeklyLessons, height: H, minLabelGap: 46, aria: `Weekly lessons since ${fullDate(D.chartStart)}, target ${T.weeklyLessons} per week` }, animate);
+      key("good", "Target hit"); key("base", "Below target"); key("dash", `Target ${T.weeklyLessons} / week`);
+      head = ["Week of", "Lessons", "Of target"];
+      rows = D.weeks.slice().reverse().map((w) => [dayMonth(w.start) + (w.partial ? " (so far)" : ""), nf.format(w.lessons), `${pct(w.lessons, T.weeklyLessons)}%`]);
+    } else if (view === "days") {
+      const last = D.days.slice(-28);
+      const items = last.map((x, i) => ({
+        value: x.lessons, hit: x.lessons >= T.dailyLessons, partial: i === last.length - 1 && !D.staleDay,
+        x: dayMonth(x.date),
+        tip: [plural(x.lessons, "lesson"), weekdayDate(x.date), `${nf.format(x.minutes)} min · ${nf.format(x.xp)} XP`],
+      }));
+      $("actSub").textContent = "Lessons per day, last 4 weeks";
+      barChart(host, { items, target: T.dailyLessons, height: H, minLabelGap: 52, aria: `Daily lessons for the last 28 days, target ${T.dailyLessons} per day` }, animate);
+      key("good", "Target hit"); key("base", "Below target"); key("dash", `Target ${T.dailyLessons} / day`);
+      head = ["Day", "Lessons", "Minutes"];
+      rows = last.slice().reverse().map((x) => [weekdayDate(x.date), nf.format(x.lessons), nf.format(x.minutes)]);
+    } else {
+      let total = 0;
+      const pts = D.days.filter((x) => x.date >= D.chartStart).map((x) => { total += x.lessons; return { date: x.date, value: total, day: x.lessons }; });
+      $("actSub").textContent = `Lessons completed since ${dayMonth(D.chartStart)}`;
+      lineChart(host, {
+        items: pts, height: H, aria: `Cumulative lessons since ${fullDate(D.chartStart)}`,
+        tip: (p) => [`${nf.format(p.value)} lessons`, weekdayDate(p.date), `+${nf.format(p.day)} that day`],
+      }, animate);
+      head = ["Day", "Total", "That day"];
+      rows = pts.slice().reverse().map((p) => [weekdayDate(p.date), nf.format(p.value), `+${nf.format(p.day)}`]);
+    }
+    const table = $("table");
+    table.replaceChildren();
+    const thead = h("thead"), tr = h("tr");
+    head.forEach((t, i) => tr.appendChild(h("th", i ? "n" : null, t)));
+    thead.appendChild(tr); table.appendChild(thead);
+    const tb = h("tbody");
+    rows.forEach((r) => { const row = h("tr"); r.forEach((c, i) => row.appendChild(h("td", i ? "n" : null, c))); tb.appendChild(row); });
+    table.appendChild(tb);
+  }
+
+  // ---------- heatmap ----------
+  function renderHeatmap() {
+    const d = D.d, T = d.targets.dailyLessons, host = $("heat");
+    host.replaceChildren();
+    const W = host.clientWidth || 300;
+    const left = 30, top = 18;
+    const lastMon = monday(D.todayDate);
+    const histMon = monday(D.days[0].date);
+    const firstMon = new Date(Math.max(monday(D.chartStart).getTime(), histMon.getTime()));
+    const weeksAvail = Math.round((lastMon - firstMon) / (7 * DAY)) + 1;
+    const cols = Math.max(1, Math.min(weeksAvail, 53, Math.floor((W - left) / 14)));
+    const pitch = Math.min(30, (W - left) / cols), cell = Math.max(8, pitch - 3);
+    const startMon = addDays(lastMon, -7 * (cols - 1));
+    const byIso = new Map(D.days.map((x) => [isoDay(x.date), x]));
+    const svgW = left + cols * pitch, svgH = top + 7 * pitch;
+    const svg = s("svg", { width: svgW, height: svgH, viewBox: `0 0 ${svgW} ${svgH}`, role: "img", "aria-label": `Lessons per day for the last ${cols} weeks` }, host);
+    ["Mon", "", "Wed", "", "Fri", "", "Sun"].forEach((lab, r) => {
+      if (lab) txt(svg, { x: 0, y: top + r * pitch + cell / 2 + 4, class: "tick" }, lab);
+    });
+    let lastLabel = -9;
+    const bin = (v) => (v <= 0 ? 0 : v >= T ? 4 : v < T / 4 ? 1 : v < T / 2 ? 2 : 3);
+    let active = 0, hits = 0, shown = 0, minutes = 0, best = null;
+    for (let c = 0; c < cols; c++) {
+      const mon = addDays(startMon, 7 * c), sun = addDays(mon, 6);
+      // label the column that holds the 1st of a month (like a contribution graph)
+      if ((mon.getUTCDate() === 1 || sun.getUTCMonth() !== mon.getUTCMonth()) && c - lastLabel >= 3) {
+        txt(svg, { x: left + c * pitch, y: 11, class: "tick" }, fmtD(sun, { month: "short" }));
+        lastLabel = c;
+      }
+      for (let r = 0; r < 7; r++) {
+        const dt = addDays(mon, r);
+        const x = byIso.get(isoDay(dt));
+        if (!x || dt > D.todayDate) continue;
+        const lvl = bin(x.lessons);
+        shown++;
+        if (x.lessons > 0) { active++; minutes += x.minutes; }
+        if (lvl === 4) hits++;
+        if (!best || x.lessons > best.lessons) best = x;
+        const isToday = dt.getTime() === D.todayDate.getTime() && !D.staleDay;
+        const rect = s("rect", {
+          x: left + c * pitch, y: top + r * pitch, width: cell, height: cell, rx: Math.min(4, cell / 4),
+          class: `hm l${lvl}${isToday ? " today" : ""}`,
+        }, svg);
+        bindTip(rect, () => [plural(x.lessons, "lesson"), weekdayDate(x.date), `${nf.format(x.minutes)} min${lvl === 4 ? " · ✓ target hit" : ""}`], rect, rect);
+      }
+    }
+    $("heatSub").textContent = `Lessons per day, last ${plural(cols, "week")}`;
+    const stats = $("heatStats");
+    stats.replaceChildren();
+    const stat = (label, value, small) => {
+      const box = h("div"), dd = h("dd", null, value);
+      box.appendChild(h("dt", null, label));
+      if (small) dd.appendChild(h("small", null, small));
+      box.appendChild(dd);
+      stats.appendChild(box);
+    };
+    const activeLessons = D.days.filter((x) => x.date >= startMon && x.date <= D.todayDate).reduce((a, x) => a + x.lessons, 0);
+    stat("Active days", nf.format(active), `of ${plural(shown, "day")} · ${pct(active, shown)}%`);
+    stat("Target days", nf.format(hits), `${T}+ lessons`);
+    stat("Best day", best ? nf.format(best.lessons) : "—", best ? weekdayDate(best.date) : "");
+    stat("Per active day", active ? f1(activeLessons / active) : "—", active ? `lessons · ${Math.round(minutes / active)} min` : "");
+    const lg = $("heatLegend");
+    lg.replaceChildren();
+    lg.appendChild(document.createTextNode("Less"));
+    [0, 1, 2, 3, 4].forEach((l) => { const i = h("i"); i.style.background = `var(--h${l})`; lg.appendChild(i); });
+    lg.appendChild(document.createTextNode("More"));
+    lg.appendChild(h("span", "sp"));
+    lg.appendChild(document.createTextNode(`Darkest = ${T}+ lessons (daily target)`));
+  }
+
+  // ---------- course path ----------
+  function renderPath(animate) {
+    const P = D.d.path, list = $("path");
+    list.replaceChildren();
+    const cur = P.current;
+    $("pathSub").textContent = cur ? `Now: Section ${cur.section}, unit ${cur.unit} of ${cur.units}` : `${pct(P.done, P.total)}% of the course done`;
+    for (const sec of P.sections) {
+      const done = sec.total > 0 && sec.done >= sec.total;
+      const li = h("li", "sec " + (done ? "is-done" : sec.active ? "is-active" : "is-todo"));
+      li.appendChild(h("span", "badge", done ? "✓" : String(sec.n)));
+      const body = h("div", "sec-body"), top = h("div", "sec-top");
+      top.appendChild(h("span", "sec-name", `Section ${sec.n}`));
+      if (sec.cefr) top.appendChild(h("span", "tag", sec.cefr));
+      if (sec.active) top.appendChild(h("span", "here", "You're here"));
+      top.appendChild(h("span", "sec-pct", `${pct(sec.done, sec.total)}%`));
+      body.appendChild(top);
+      if (!done) {
+        const m = h("div", "meter thin"), fill = h("i");
+        m.appendChild(fill); body.appendChild(m);
+        const w = sec.total ? (100 * sec.done) / sec.total : 0;
+        const wv = `${w > 0 ? Math.max(w, 2) : 0}%`;
+        if (animate && !reduceMotion) requestAnimationFrame(() => requestAnimationFrame(() => { fill.style.width = wv; }));
+        else fill.style.width = wv;
+      }
+      const sub = h("div", "sec-sub");
+      if (sec.active && cur) {
+        rich(sub, [`Unit ${cur.unit} of ${cur.units}`, cur.title ? ` · ${cur.title}` : ""]);
+      } else if (done) {
+        sub.textContent = `${plural(sec.units, "unit")} · ${nf.format(sec.total)} lessons`;
+      } else {
+        rich(sub, [`${plural(sec.units, "unit")} · ${nf.format(sec.total - sec.done)} lessons left`]);
+      }
+      if (!done && sec.eta) sub.appendChild(h("div", "eta", `ETA ${fullDate(parseDay(sec.eta))}`));
+      body.appendChild(sub);
+      li.appendChild(body);
+      list.appendChild(li);
+    }
+  }
+
+  // ---------- footer ----------
+  function renderFooter() {
+    const d = D.d, f = $("footer");
+    f.replaceChildren();
+    const gen = new Date(d.generatedAt);
+    const genStr = gen.toLocaleString("en-GB", { timeZone: d.tz, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+    f.appendChild(rich(h("p"), [
+      "Data from Duolingo's unofficial API, refreshed about every 5 minutes by GitHub Actions. ",
+      "Finish dates assume ", { b: f1(d.stats.rate7) }, " lessons a day: the average of the last 7 full days.",
+    ]));
+    const p = h("p");
+    p.appendChild(document.createTextNode(`Generated ${genStr} (${d.tz}) · `));
+    const run = h("a", null, "Run an update now ↗");
+    run.href = `https://github.com/${d.repo}/actions/workflows/dashboard.yml`;
+    run.target = "_blank"; run.rel = "noopener";
+    p.appendChild(run);
+    p.appendChild(document.createTextNode(" · "));
+    const src = h("a", null, "Source");
+    src.href = `https://github.com/${d.repo}`;
+    src.target = "_blank"; src.rel = "noopener";
+    p.appendChild(src);
+    f.appendChild(p);
+  }
+
+  // ---------- live status + polling ----------
+  function updateLive(flash) {
+    const btn = $("live"), label = $("liveText");
+    if (!data) { label.textContent = fetching ? "Loading…" : "Offline"; btn.className = "live old"; return; }
+    const age = Math.max(0, (Date.now() - Date.parse(data.generatedAt)) / 60000);
+    const cls = age < 15 ? "fresh" : age < 120 ? "stale" : "old";
+    let t;
+    if (fetching) t = "Checking…";
+    else if (age < 1) t = "Live · just now";
+    else if (age < 15) t = `Live · ${Math.round(age)} min ago`;
+    else if (age < 90) t = `Updated ${Math.round(age)} min ago`;
+    else t = `Updated ${new Date(data.generatedAt).toLocaleString("en-GB", { timeZone: data.tz, weekday: age > 1440 ? "short" : undefined, hour: "2-digit", minute: "2-digit" })}`;
+    label.textContent = t;
+    btn.className = `live ${cls}${fetching ? " busy" : ""}`;
+    if (flash) { void btn.offsetWidth; btn.classList.add("flash"); }
+  }
+
+  async function refresh(manual) {
+    if (fetching || location.protocol === "file:") { if (manual) updateLive(true); return; }
+    fetching = true; lastCheck = Date.now(); updateLive();
+    let changed = false;
+    try {
+      const r = await fetch(`data.json?t=${Date.now()}`, { cache: "no-store" });
+      if (r.ok) {
+        const next = await r.json();
+        if (!data || next.generatedAt !== data.generatedAt) {
+          const first = !data;
+          data = next; changed = true;
+          render(first ? true : "update");
+        }
+      }
+    } catch (e) { /* offline or between deploys: keep showing what we have */ }
+    fetching = false;
+    updateLive(changed || manual);
+  }
+
+  // ---------- render ----------
+  let widths = {};
+  function render(mode) {
+    if (!data) return;
+    const animate = mode === true || mode === "update";
+    D = derive(data);
+    hideTip();
+    renderHeader();
+    renderHero(animate);
+    renderMilestones(mode === true);
+    renderKpis(animate);
+    renderChart(mode === true);
+    renderHeatmap();
+    renderPath(mode === true);
+    renderFooter();
+    widths = { chart: $("chart").clientWidth, heat: $("heat").clientWidth };
+  }
+
+  document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => {
+    view = b.dataset.view;
+    document.querySelectorAll(".seg button").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
+    hideTip();
+    if (D) renderChart(true);
+  }));
+  $("live").addEventListener("click", (e) => { e.stopPropagation(); refresh(true); });
+
+  let raf = 0;
+  new ResizeObserver(() => {
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => {
+      if (!D) return;
+      const cw = $("chart").clientWidth, hw = $("heat").clientWidth;
+      if (cw !== widths.chart) { renderChart(false); widths.chart = cw; }
+      if (hw !== widths.heat) { renderHeatmap(); widths.heat = hw; }
+    });
+  }).observe($("app"));
+
+  const top = $("top");
+  addEventListener("scroll", () => top.classList.toggle("scrolled", scrollY > 4), { passive: true });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - lastCheck > 20000) refresh(false); });
+  setInterval(() => { if (!document.hidden) refresh(false); }, POLL_MS);
+  setInterval(() => { updateLive(); if (D && nowInTz(D.d.tz).day !== D.local.day) render(false); }, 15000);
+
+  if (data) render(true);
+  updateLive();
+  // The HTML itself may come from a cache (Pages sends max-age=600), so check for fresher data now.
+  setTimeout(() => refresh(false), data ? 1500 : 0);
+})();
+</script>
+</body>
+</html>

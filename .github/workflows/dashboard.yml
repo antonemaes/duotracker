@@ -2,50 +2,58 @@ name: Duolingo dashboard
 
 on:
   schedule:
-    # Daily at 05:23 UTC (06:23 Zurich in winter, 07:23 in summer).
-    # GitHub cron is best-effort; the dashboard always reflects "today" whenever it runs.
-    - cron: "23 5 * * *"
-  workflow_dispatch:        # "Run workflow" button for manual refreshes
+    # Every 5 minutes. GitHub runs scheduled jobs best-effort: expect 5-15 min between
+    # runs in practice, sometimes more around the top of the hour.
+    - cron: "*/5 * * * *"
+  workflow_dispatch:        # "Run workflow" button for an immediate update
+  push:                     # redeploy right away when the page or generator changes
+    branches: [main]
+    paths:
+      - "web/**"
+      - "duo_dashboard.py"
+      - ".github/workflows/dashboard.yml"
 
-# avoid a scheduled run and a manual run pushing at the same time
-concurrency:
-  group: dashboard
-  cancel-in-progress: true
-
+# Deploys straight to GitHub Pages (Settings -> Pages -> Source: "GitHub Actions").
+# Nothing is committed back, so 288 runs a day don't touch the git history, and the
+# "10 Pages builds per hour" limit for branch deploys doesn't apply.
 permissions:
-  contents: write           # needed to commit index.html back to the repo
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false   # never cut a deploy off half-way; the next run just waits
 
 jobs:
-  dashboard:
+  deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      # This job runs once a day on purpose: duo_dashboard.py also fetches
-      # users/{id}?fields=currentCourse (~9 MB) for live section/unit progress.
-      # The hourly nudge job only uses the small xp_summaries endpoint.
-      - name: Generate dashboard
+      # Two small calls: xp_summaries (~1 KB gzipped) and users/{id} with a nested field
+      # filter (~22 KB gzipped, instead of the 9 MB unfiltered currentCourse).
+      - name: Build dashboard
         env:
           DUO_JWT: ${{ secrets.DUO_JWT }}
           DUO_TZ: "Europe/Zurich"
           DUO_HISTORY_DAYS: "365"
-          DUO_CHART_START: "2026-10-01"      # graph x-axis starts here (Oct 2026)
-          DUO_DAILY_TARGET: "25"             # hero ring target per day
-          DUO_WEEKLY_TARGET: "175"           # bar target per week (25 lessons/day x 7)
-          DUO_PROJECTION_SECTIONS: "5,6"
-          DUO_REPO: "antonemaes/duotracker"  # for the in-page refresh link
-        run: python duo_dashboard.py --out index.html
-      - name: Commit and push index.html
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          if git diff --cached --quiet; then
-            echo "index.html unchanged"
-          else
-            git commit -m "Update dashboard [skip ci]"
-            git push
-          fi
+          DUO_CHART_START: "2026-10-01"      # weekly/total charts start here
+          DUO_DAILY_TARGET: "25"             # lessons per day (hero ring, heatmap)
+          DUO_WEEKLY_TARGET: "175"           # lessons per week (25/day x 7)
+          DUO_GOAL_MINUTES: "60"             # minutes per day (inner ring; same as the nudge)
+          DUO_PROJECTION_GROUPS: "B1=5,6;B2=7,8"  # finish-date cards per level (sections numbered like the app)
+          DUO_REPO: ${{ github.repository }} # for the page's links
+        run: python duo_dashboard.py --out-dir _site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4
