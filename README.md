@@ -51,7 +51,8 @@ Edit the `env:` block in `.github/workflows/nudge.yml`:
 
 The page shows:
 
-- **Top cards:** projected completion dates for **Section 5** and **Section 6** — live remaining lessons (counting all unfinished sections up to that one) divided by your **7-day moving average** of lessons/day.
+- **Hero (very top):** a circular ring with **lessons completed today** vs the daily target (25, `DUO_DAILY_TARGET`) — blue while in progress, green once hit.
+- **Date cards:** projected completion dates for **Section 5** and **Section 6** — live remaining lessons (counting all unfinished sections up to that one) divided by your **7-day moving average** of lessons/day.
 - **Stat cards:** lessons today, this week, 7-day average, course progress (path lessons done/total, live), total lessons.
 - **Chart:** bars = lessons per week (left axis), **green if the week hit the target (≥175 = 25/day × 7), red if below** (a small red tick marks a zero-lesson week), with a dashed target line. Blue line = cumulative lessons (right axis), dashed = projection at the 7-day average out to **end of Q1 2027** (`2027-03-31`), with markers where the projection crosses your section milestones. The header also shows the unit you're currently on.
 
@@ -73,6 +74,7 @@ Dashboard env vars (set in the `env:` block of `.github/workflows/dashboard.yml`
 |---|---|---|
 | `DUO_HISTORY_DAYS` | `365` | How much history to fetch (stats/averages use all of it) |
 | `DUO_CHART_START` | `2026-10-01` | Where the graph's x-axis starts (Oct 2026) |
+| `DUO_DAILY_TARGET` | `25` | Hero ring: lessons-today target (turns green when hit) |
 | `DUO_WEEKLY_TARGET` | `175` | Weekly bar target for green/red coloring (25 lessons/day × 7) |
 | `DUO_PROJECTION_END` | `2027-03-31` | Where the projection line stops (end of Q1 2027) |
 | `DUO_PROJECTION_SECTIONS` | `5,6` | Which sections get completion-date cards |

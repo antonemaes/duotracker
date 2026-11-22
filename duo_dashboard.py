@@ -22,6 +22,7 @@ Config (environment variables)
   DUO_MOCK_COURSE_JSON    optional  saved currentCourse response, for offline testing
   DUO_HISTORY_DAYS        optional  days of history to fetch           (default 365)
   DUO_CHART_START         optional  ISO date the graph's x-axis starts (default 2026-10-01)
+  DUO_DAILY_TARGET        optional  daily lessons target for the hero ring (default 25)
   DUO_WEEKLY_TARGET       optional  weekly lessons target; bars >= this are green (default 175 = 25/day)
   DUO_PROJECTION_END      optional  ISO date the projection runs to    (default 2027-03-31)
   DUO_PROJECTION_SECTIONS optional  comma-separated section numbers  (default 5,6)
@@ -35,6 +36,7 @@ Flags
   --out PATH         output file (overrides DASHBOARD_OUT)
   --days N           history window in days (overrides DUO_HISTORY_DAYS)
   --chart-start DATE ISO date the graph starts at (overrides DUO_CHART_START)
+  --daily-target N   daily lessons target for the hero ring (overrides DUO_DAILY_TARGET)
   --weekly-target N  weekly lessons target for bar coloring (overrides DUO_WEEKLY_TARGET)
   --mock PATH        offline mode: saved xp_summaries response
   --mock-course PATH offline mode: saved currentCourse response
@@ -81,6 +83,7 @@ def load_config(args):
         "mock_course": args.mock_course or env("DUO_MOCK_COURSE_JSON"),
         "days": args.days or int(env("DUO_HISTORY_DAYS", "365")),
         "chart_start": date.fromisoformat(args.chart_start or env("DUO_CHART_START", "2026-10-01")),
+        "daily_target": args.daily_target or int(env("DUO_DAILY_TARGET", "25")),
         "weekly_target": args.weekly_target or int(env("DUO_WEEKLY_TARGET", "175")),
         "proj_end": date.fromisoformat(env("DUO_PROJECTION_END", "2027-03-31")),
         "proj_sections": sorted(int(s) for s in env("DUO_PROJECTION_SECTIONS", "5,6").split(",")),
@@ -375,7 +378,31 @@ footer { color: #5f7a82; font-size: 12px; margin-top: 18px; line-height: 1.5; }
 #refreshbar .track { flex: 1; height: 6px; background: #2a3a40; border-radius: 3px; overflow: hidden; }
 #refreshbar .bar { height: 100%; width: 40%; background: #58cc02; border-radius: 3px; animation: slide 1.2s ease-in-out infinite; }
 @keyframes slide { 0% { margin-left: -40%; } 100% { margin-left: 100%; } }
+.hero { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin: 14px 0; }
+.donut { width: 150px; height: 150px; flex: 0 0 auto; }
+.donut-num { fill: #e8f1f2; font-size: 42px; font-weight: 700; }
+.donut-sub { fill: #8fa6ad; font-size: 13px; }
+.hero .big { font-size: clamp(26px, 7vw, 36px); }
 """
+
+
+def donut(lessons, target, size=170, stroke=14):
+    """Circular progress ring: lessons completed today vs the daily target."""
+    r = (size - stroke) / 2
+    c = 2 * math.pi * r
+    pct = min(1.0, lessons / target) if target > 0 else 0.0
+    color = "#58cc02" if lessons >= target else "#1cb0f6"
+    off = c * (1 - pct)
+    cx = size / 2
+    return (f'<svg viewBox="0 0 {size} {size}" class="donut" role="img" '
+            f'aria-label="{lessons} of {target} lessons today ({round(pct * 100)}%)">'
+            f'<circle cx="{cx}" cy="{cx}" r="{r:.1f}" fill="none" stroke="#2a3a40" stroke-width="{stroke}"/>'
+            f'<circle cx="{cx}" cy="{cx}" r="{r:.1f}" fill="none" stroke="{color}" stroke-width="{stroke}" '
+            f'stroke-linecap="round" stroke-dasharray="{c:.1f}" stroke-dashoffset="{off:.1f}" '
+            f'transform="rotate(-90 {cx} {cx})"/>'
+            f'<text x="50%" y="48%" text-anchor="middle" class="donut-num">{lessons}</text>'
+            f'<text x="50%" y="62%" text-anchor="middle" class="donut-sub">/ {target} today · {round(pct * 100)}%</text>'
+            f'</svg>')
 
 
 # Inline script for the refresh progress bar. Kept out of the f-string below so its
@@ -418,11 +445,21 @@ REFRESH_JS = r"""<script>
 </script>"""
 
 
-def render_html(now, today, days, ma7, cum, course, current_unit, sec_dates, svg, proj_end, wanted, week_target, repo):
+def render_html(now, today, days, ma7, cum, course, current_unit, sec_dates, svg, proj_end, wanted, week_target, repo, daily_target):
     total = cum[-1][1] if cum else 0
     lessons_today = days[-1][1]
     week_start = today - timedelta(days=today.weekday())
     lessons_week = sum(l for d, l, _ in days if d >= week_start)
+    hit = lessons_today >= daily_target
+    hero = f"""
+  <section class="card hero">
+    {donut(lessons_today, daily_target)}
+    <div>
+      <div class="label">Lessons today</div>
+      <div class="big">{lessons_today}<span class="muted"> / {daily_target}</span></div>
+      <div class="sub">{round(min(1, lessons_today / daily_target) * 100) if daily_target else 0}% of today's target{' — hit 🎉' if hit else ''}</div>
+    </div>
+  </section>"""
     course_title = html.escape(str(course.get("title", "Duolingo")))
     c_fin, c_tot = course.get("finished", 0), course.get("total", 0)
     c_pct = min(100, round(100 * c_fin / c_tot)) if c_tot else 0
@@ -449,7 +486,6 @@ def render_html(now, today, days, ma7, cum, course, current_unit, sec_dates, svg
     proj_cards = "".join(sec_card(n) for n in wanted)
     stats = f"""
   <section class="cards stats">
-    <div class="card"><div class="label">Lessons today</div><div class="big">{lessons_today}</div></div>
     <div class="card"><div class="label">This week</div><div class="big">{lessons_week}</div></div>
     <div class="card"><div class="label">7-day avg</div><div class="big">{ma7:.1f}<span class="muted">/day</span></div></div>
     <div class="card"><div class="label">Course progress</div><div class="big">{c_pct}%</div>
@@ -476,6 +512,8 @@ def render_html(now, today, days, ma7, cum, course, current_unit, sec_dates, svg
   </header>
 
   <div id="refreshbar" class="hidden"><span id="refreshmsg"></span><div class="track"><div class="bar"></div></div></div>
+
+  {hero}
 
   <section class="cards projection">
     {proj_cards}
@@ -513,6 +551,7 @@ def main():
     ap.add_argument("--out", help="output HTML file (overrides DASHBOARD_OUT)")
     ap.add_argument("--days", type=int, help="history window in days (overrides DUO_HISTORY_DAYS)")
     ap.add_argument("--chart-start", help="ISO date the graph's x-axis starts at (overrides DUO_CHART_START)")
+    ap.add_argument("--daily-target", type=int, help="daily lessons target for the hero ring (overrides DUO_DAILY_TARGET)")
     ap.add_argument("--weekly-target", type=int, help="weekly lessons target for bar coloring (overrides DUO_WEEKLY_TARGET)")
     ap.add_argument("--mock", help="saved xp_summaries response (offline)")
     ap.add_argument("--mock-course", help="saved currentCourse response (offline)")
@@ -552,7 +591,8 @@ def main():
 
     svg = render_chart(chart_days, chart_weeks, chart_cum, proj, today, cfg["proj_end"], sec_dates, cfg["weekly_target"])
     page = render_html(now, today, days, ma7, cum, course, current_unit,
-                       sec_dates, svg, cfg["proj_end"], cfg["proj_sections"], cfg["weekly_target"], cfg["repo"])
+                       sec_dates, svg, cfg["proj_end"], cfg["proj_sections"], cfg["weekly_target"], cfg["repo"],
+                       cfg["daily_target"])
     cfg["out"].write_text(page, encoding="utf-8")
 
     print(f"Wrote {cfg['out']} ({cfg['out'].stat().st_size:,} bytes)")
