@@ -144,6 +144,45 @@ h1 { margin: 1px 0 0; font-size: 20px; line-height: 1.15; font-weight: 800; lett
 .live.stale .dot { background: var(--warn); }
 .live.busy .dot { animation: blink .7s ease-in-out infinite alternate; }
 .live.flash { animation: flash 1.4s ease-out; }
+.live .rf { width: 15px; height: 15px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; opacity: .75; }
+.live.running { color: var(--ink); border-color: color-mix(in srgb, var(--live) 60%, transparent); }
+.live.running .rf { animation: spin 1s linear infinite; opacity: 1; }
+.live .lv { font-variant-numeric: tabular-nums; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 399px) { .lv-pre { display: none; } }
+
+/* ---------- refresh dialog + toast ---------- */
+dialog.sheet {
+  border: 1px solid var(--line); border-radius: 22px; background: var(--card); color: var(--ink);
+  padding: 20px; width: min(420px, calc(100vw - 32px)); box-shadow: 0 24px 60px rgba(0, 0, 0, .35);
+}
+dialog.sheet::backdrop { background: rgba(5, 10, 12, .55); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.sheet-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.sheet h2 { font-size: 19px; font-weight: 800; margin: 0; }
+.sheet p { margin: 8px 0; font-size: 14px; color: var(--ink-2); line-height: 1.45; }
+.sheet label { display: block; font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-top: 14px; }
+.sheet input {
+  width: 100%; margin-top: 6px; font: inherit; font-size: 16px; padding: 11px 12px; border-radius: 12px;
+  border: 1px solid var(--axis); background: var(--card-2); color: var(--ink);
+}
+.sheet .hint { font-size: 12.5px; color: var(--muted); }
+.sheet .hint a { color: var(--ink-2); font-weight: 700; }
+.sheet .small { font-size: 12px; margin-top: 12px; }
+.sheet .err { color: var(--bad-text); font-size: 13px; font-weight: 700; }
+.sheet-row { display: flex; gap: 10px; flex-wrap: wrap-reverse; margin-top: 14px; }
+.sheet-row .btn { flex: 1 1 auto; justify-content: center; white-space: nowrap; }
+.btn {
+  appearance: none; border: 0; border-radius: 12px; padding: 0 16px; min-height: 44px; display: inline-flex; align-items: center;
+  font: inherit; font-size: 14px; font-weight: 800; background: var(--good); color: #0b1114; cursor: pointer; text-decoration: none;
+}
+.btn.ghost { background: var(--card-2); color: var(--ink); border: 1px solid var(--line); }
+.x { appearance: none; border: 0; background: var(--card-2); color: var(--ink-2); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font: inherit; font-size: 14px; }
+.toast {
+  position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 60;
+  background: var(--tip-bg); color: var(--tip-ink); padding: 11px 15px; border-radius: 14px; font-size: 13.5px; font-weight: 600;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .3); width: max-content; max-width: calc(100vw - 32px); text-align: center;
+}
+.linkish { appearance: none; background: none; border: 0; padding: 0; font: inherit; color: var(--ink-2); font-weight: 700; border-bottom: 1px solid var(--line); cursor: pointer; }
 @keyframes ping { 0% { transform: scale(.5); opacity: .9; } 80%, 100% { transform: scale(1.9); opacity: 0; } }
 @keyframes blink { to { opacity: .25; } }
 @keyframes flash { 0% { box-shadow: 0 0 0 0 var(--glow), var(--shadow); border-color: var(--live); } 100% { box-shadow: 0 0 0 14px transparent, var(--shadow); } }
@@ -385,8 +424,9 @@ footer a:hover { border-bottom-color: var(--ink-2); }
         <h1><span id="lang">Duolingo</span><span class="code" id="code" hidden></span><span class="from" id="from"></span></h1>
       </div>
     </div>
-    <button class="live" id="live" type="button" aria-live="polite" title="Tap to check for new data">
-      <i class="dot"></i><span id="liveText">Loading…</span>
+    <button class="live" id="live" type="button" title="Refresh now">
+      <i class="dot"></i><span class="lv" aria-live="polite"><span class="lv-pre" id="livePre"></span><span id="liveText">Loading…</span></span>
+      <svg class="rf" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg>
     </button>
   </div>
 </header>
@@ -447,6 +487,23 @@ footer a:hover { border-bottom-color: var(--ink-2); }
 </main>
 
 <div class="tip" id="tip" role="status" aria-live="polite"></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<dialog class="sheet" id="tokDlg" aria-labelledby="tokTitle">
+  <form id="tokForm" novalidate>
+    <div class="sheet-head"><h2 id="tokTitle">Refresh now</h2><button type="button" class="x" id="tokClose" aria-label="Close">✕</button></div>
+    <p>Starting an update on GitHub needs a token. Paste it once: this browser keeps it on this device only, and it's never part of the page.</p>
+    <label for="tokInput">GitHub token</label>
+    <input id="tokInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…">
+    <p class="err" id="tokErr" hidden></p>
+    <p class="hint">A fine-grained token for the duotracker repo with <b>Actions: Read and write</b>. <a id="tokHelp" target="_blank" rel="noopener">How to create one ↗</a></p>
+    <div class="sheet-row">
+      <a class="btn ghost" id="tokGithub" target="_blank" rel="noopener">Use GitHub instead</a>
+      <button class="btn" type="submit">Save and refresh</button>
+    </div>
+    <p class="hint small">Not the owner? Only the owner can start an update; the dashboard also refreshes on its own.</p>
+  </form>
+</dialog>
 
 <script id="seed" type="application/json">__DUO_SEED__</script>
 <script>
@@ -1058,12 +1115,12 @@ footer a:hover { border-bottom-color: var(--ink-2); }
     const gen = new Date(d.generatedAt);
     const genStr = gen.toLocaleString("en-GB", { timeZone: d.tz, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
     f.appendChild(rich(h("p"), [
-      "Data from Duolingo's unofficial API, refreshed about every 5 minutes by GitHub Actions. ",
+      "Data from Duolingo's unofficial API, refreshed by GitHub Actions every few minutes, or right away with the ↻ button at the top. ",
       "Finish dates assume ", { b: f1(d.stats.rate7) }, " lessons a day: the average of the last 7 full days.",
     ]));
     const p = h("p");
     p.appendChild(document.createTextNode(`Generated ${genStr} (${d.tz}) · `));
-    const run = h("a", null, "Run an update now ↗");
+    const run = h("a", null, "Run on GitHub ↗");
     run.href = `https://github.com/${d.repo}/actions/workflows/dashboard.yml`;
     run.target = "_blank"; run.rel = "noopener";
     p.appendChild(run);
@@ -1072,24 +1129,149 @@ footer a:hover { border-bottom-color: var(--ink-2); }
     src.href = `https://github.com/${d.repo}`;
     src.target = "_blank"; src.rel = "noopener";
     p.appendChild(src);
+    if (getToken()) {
+      p.appendChild(document.createTextNode(" · "));
+      const rm = h("button", "linkish", "Forget the refresh token on this device");
+      rm.type = "button";
+      rm.addEventListener("click", () => { setToken(""); toast("Refresh token removed from this device."); renderFooter(); });
+      p.appendChild(rm);
+    }
     f.appendChild(p);
   }
 
   // ---------- live status + polling ----------
   function updateLive(flash) {
-    const btn = $("live"), label = $("liveText");
-    if (!data) { label.textContent = fetching ? "Loading…" : "Offline"; btn.className = "live old"; return; }
+    const btn = $("live"), pre = $("livePre"), label = $("liveText");
+    if (waiting) {
+      const s = Math.round((Date.now() - waiting.t0) / 1000), clock = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+      pre.textContent = "";
+      label.textContent = waiting.starting ? "Starting…" : `${waiting.viaGithub ? "Waiting" : "Updating"}… ${clock}`;
+      btn.className = "live fresh running";
+      btn.setAttribute("aria-label", `${label.textContent} Fresh numbers usually arrive within a minute.`);
+      return;
+    }
+    if (!data) { pre.textContent = ""; label.textContent = fetching ? "Loading…" : "Offline"; btn.className = "live old"; return; }
     const age = Math.max(0, (Date.now() - Date.parse(data.generatedAt)) / 60000);
     const cls = age < 15 ? "fresh" : age < 120 ? "stale" : "old";
-    let t;
-    if (fetching) t = "Checking…";
-    else if (age < 1) t = "Live · just now";
-    else if (age < 15) t = `Live · ${Math.round(age)} min ago`;
-    else if (age < 90) t = `Updated ${Math.round(age)} min ago`;
-    else t = `Updated ${new Date(data.generatedAt).toLocaleString("en-GB", { timeZone: data.tz, weekday: age > 1440 ? "short" : undefined, hour: "2-digit", minute: "2-digit" })}`;
+    let p = "Updated ", t;
+    if (age < 1) { p = "Live · "; t = "just now"; }
+    else if (age < 15) { p = "Live · "; t = `${Math.round(age)} min ago`; }
+    else if (age < 90) t = `${Math.round(age)} min ago`;
+    else t = new Date(data.generatedAt).toLocaleString("en-GB", { timeZone: data.tz, weekday: age > 1440 ? "short" : undefined, hour: "2-digit", minute: "2-digit" });
+    pre.textContent = p;
     label.textContent = t;
     btn.className = `live ${cls}${fetching ? " busy" : ""}`;
+    btn.setAttribute("aria-label", `${p}${t}. Tap to refresh now.`);
     if (flash) { void btn.offsetWidth; btn.classList.add("flash"); }
+  }
+
+  // ---------- one-tap refresh: start the GitHub workflow from this device ----------
+  // The token lives only in this browser's storage (pasted once by the owner); it is
+  // never part of the page or the repo, so visitors can't see or use it.
+  const TOKEN_KEY = "duotracker.githubToken";
+  const WAIT_POLL_MS = 6000, WAIT_MAX_MS = 5 * 60 * 1000;
+  let waiting = null;                 // {t0, base, starting, viaGithub, poll, tick}
+  const getToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ""; } catch (e) { return ""; } };
+  const setToken = (v) => {
+    try { if (v) localStorage.setItem(TOKEN_KEY, v); else localStorage.removeItem(TOKEN_KEY); return true; } catch (e) { return false; }
+  };
+  const repoName = () => (data && data.repo) || "antonemaes/duotracker";
+
+  let toastTimer = 0;
+  function toast(msg, ms = 6000) {
+    const el = $("toast");
+    el.textContent = msg;
+    el.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.hidden = true; }, ms);
+  }
+
+  function startWaiting(viaGithub) {
+    stopWaiting();
+    waiting = { t0: Date.now(), base: data && data.generatedAt, starting: false, viaGithub: !!viaGithub };
+    waiting.poll = setInterval(() => {
+      if (Date.now() - waiting.t0 > WAIT_MAX_MS) {
+        stopWaiting();
+        toast("No new data yet. The run may still be going: check the Actions tab on GitHub.");
+        return;
+      }
+      refresh(false);
+    }, WAIT_POLL_MS);
+    waiting.tick = setInterval(() => updateLive(), 1000);
+    updateLive();
+  }
+  function stopWaiting() {
+    if (waiting) { clearInterval(waiting.poll); clearInterval(waiting.tick); }
+    waiting = null;
+    updateLive();
+  }
+
+  async function startRun(token) {
+    if (waiting) return;
+    startWaiting(false);
+    waiting.starting = true;
+    updateLive();
+    let problem;
+    try {
+      const r = await fetch(`https://api.github.com/repos/${repoName()}/actions/workflows/dashboard.yml/dispatches`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ref: "main" }),
+      });
+      if (r.status === 204) {
+        if (waiting) { waiting.starting = false; waiting.t0 = Date.now(); }
+        updateLive();
+        return;
+      }
+      if (r.status === 401) { setToken(""); problem = "GitHub rejected that token, so it was removed from this device."; }
+      else if (r.status === 403 || r.status === 404) problem = "That token can't start the update. It needs Actions: Read and write on the duotracker repo.";
+      else problem = `GitHub answered ${r.status}. Try again in a minute.`;
+    } catch (e) {
+      problem = "Couldn't reach GitHub. Check your connection and try again.";
+    }
+    stopWaiting();
+    toast(problem, 8000);
+    if (D) renderFooter();
+  }
+
+  const dlg = $("tokDlg");
+  function openTokenDialog() {
+    $("tokErr").hidden = true;
+    $("tokInput").value = "";
+    $("tokHelp").href = `https://github.com/${repoName()}#one-tap-refresh-button`;
+    $("tokGithub").href = `https://github.com/${repoName()}/actions/workflows/dashboard.yml`;
+    if (typeof dlg.showModal === "function") dlg.showModal();
+    else window.open($("tokGithub").href, "_blank", "noopener");
+  }
+  $("tokForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const v = $("tokInput").value.trim();
+    if (!/^(github_pat_|ghp_)[A-Za-z0-9_]{20,}$/.test(v)) {
+      const err = $("tokErr");
+      err.textContent = "That doesn't look like a GitHub token. Fine-grained tokens start with github_pat_.";
+      err.hidden = false;
+      return;
+    }
+    if (!setToken(v)) toast("This browser won't store the token (private browsing?), so it works for this tap only.");
+    dlg.close();
+    if (D) renderFooter();
+    startRun(v);
+  });
+  $("tokClose").addEventListener("click", () => dlg.close());
+  $("tokGithub").addEventListener("click", () => { dlg.close(); startWaiting(true); });
+  dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });   // tap on the backdrop
+
+  function onRefreshTap() {
+    if (location.protocol === "file:") { toast("Open the dashboard from its web address to refresh."); return; }
+    if (waiting) { toast("Already updating. Fresh numbers usually arrive within a minute."); return; }
+    const token = getToken();
+    if (token) startRun(token);
+    else openTokenDialog();
   }
 
   async function refresh(manual) {
@@ -1104,6 +1286,10 @@ footer a:hover { border-bottom-color: var(--ink-2); }
           const first = !data;
           data = next; changed = true;
           render(first ? true : "update");
+          if (waiting && !waiting.starting && next.generatedAt !== waiting.base) {
+            stopWaiting();
+            toast("Updated with the latest numbers.", 4000);
+          }
         }
       }
     } catch (e) { /* offline or between deploys: keep showing what we have */ }
@@ -1135,7 +1321,7 @@ footer a:hover { border-bottom-color: var(--ink-2); }
     hideTip();
     if (D) renderChart(true);
   }));
-  $("live").addEventListener("click", (e) => { e.stopPropagation(); refresh(true); });
+  $("live").addEventListener("click", (e) => { e.stopPropagation(); onRefreshTap(); });
 
   let raf = 0;
   new ResizeObserver(() => {

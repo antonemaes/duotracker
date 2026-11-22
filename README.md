@@ -73,7 +73,7 @@ It writes a folder (`_site/`) with:
 - **`index.html`**: the static design in `web/index.html`, with the same data inlined so the first paint needs no extra request.
 - The icons, web-app manifest and social preview image from `web/`.
 
-The open page re-fetches `data.json` every minute, and again whenever you come back to the tab. New numbers count up in place, with no reload. The pill in the header shows how fresh the data is (green = under 15 min old). Tap it to check right away.
+The open page re-fetches `data.json` every minute, and again whenever you come back to the tab. New numbers count up in place, with no reload. The pill in the header shows how fresh the data is (green = under 15 min old). Tap it (**↻**) to start an update right away (see [One-tap refresh button](#one-tap-refresh-button)).
 
 **What's on the page** (mobile-first; 2 columns on tablets, a 12-column grid on desktop; light and dark mode follow the system):
 
@@ -93,7 +93,7 @@ The open page re-fetches `data.json` every minute, and again whenever you come b
 
 ### Deploying (one-time setup)
 
-`.github/workflows/dashboard.yml` runs every 5 minutes (and on pushes that touch `web/` or the generator), builds `_site/`, and **deploys it straight to Pages**. Nothing is committed back, so the git history stays clean.
+`.github/workflows/dashboard.yml` builds `_site/` and **deploys it straight to Pages**. Nothing is committed back, so the git history stays clean. It runs on GitHub's schedule (every 5 minutes, best-effort), when you tap the dashboard's **↻** button, and on pushes that touch `web/` or the generator.
 
 1. **Settings → Pages → Build and deployment → Source: _GitHub Actions_.** This replaces the old "Deploy from a branch" setup.
 2. Free plan: Pages only serves *public* repos.
@@ -103,9 +103,29 @@ Then *Run workflow* once, or push. The site stays at `https://antonemaes.github.
 
 Good to know:
 
-- **GitHub cron is best-effort.** `*/5` usually means a run every 5 to 15 minutes, and sometimes more around the top of the hour. For an immediate update, use *Run an update now* in the page footer, or Actions → *Duolingo dashboard* → *Run workflow*.
+- **GitHub's own schedule is best-effort.** A `*/5` schedule ran only once in its first hour here, and the old daily run was often 30–60 minutes late. When you need fresh numbers now (say, before showing the dashboard), tap **↻**.
 - **Actions minutes:** each run takes about 30 to 40 s. That's free on public repos (a private repo would use roughly 4,000+ minutes a month).
-- **60-day rule:** GitHub pauses scheduled workflows in a repo with no commits for 60 days. The old daily bot commit kept the repo active; this setup doesn't commit. GitHub emails you before it pauses anything, and any push or a click on *Enable workflow* turns it back on.
+- **60-day rule:** GitHub pauses *scheduled* workflows in a repo with no commits for 60 days. The ↻ button still works then, but the automatic updates and the nudges stop. GitHub emails you before it pauses anything, and any push or a click on *Enable workflow* turns it back on.
+
+### One-tap refresh button
+
+The pill at the top right of the dashboard ("Live · 3 min ago ↻") starts the dashboard workflow on GitHub. It then shows *Updating… 0:35* and swaps in the fresh numbers when they land, usually within a minute.
+
+Starting a workflow needs a GitHub token, and a public page can't contain one. So the button asks for the token **once per device** and keeps it in that browser's storage only. It's never in the page or the repo, and visitors without it just see an explanation and a link to GitHub. You create the token yourself, so it never passes through anyone else:
+
+1. **Create a token that can only start workflows in this repo.** GitHub → your avatar → Settings → Developer settings → Personal access tokens → **Fine-grained tokens** → *Generate new token*.
+   - Name: `duotracker refresh`. Expiration: up to a year (put a reminder in your calendar to renew it).
+   - Repository access: **Only select repositories** → `duotracker`.
+   - Permissions → Repository permissions → **Actions: Read and write**. Leave everything else at *No access* (*Metadata: Read-only* is added automatically).
+   - Generate, and copy the token (it's shown once).
+
+   This token can start, cancel and re-run workflows in this repo. It can't read your secrets, change code or touch other repos.
+2. **Paste it into the dashboard.** Open the dashboard on your phone, tap **↻**, paste the token, and tap *Save and refresh*. Do this once on each device and browser you use. A home-screen web app on iPhone keeps its own storage, so it asks once more.
+3. **Remove it** any time with *Forget the refresh token on this device* in the page footer, or revoke it on GitHub.
+
+If the token is wrong or expired, the button says so and removes it, and you can paste a new one.
+
+**Optional, always fresh without tapping:** the same token can drive a free outside timer. At [cron-job.org](https://cron-job.org), create a job that runs every 5 minutes and sends a **POST** to `https://api.github.com/repos/antonemaes/duotracker/actions/workflows/dashboard.yml/dispatches` with the headers `Authorization: Bearer <token>`, `Accept: application/vnd.github+json` and `X-GitHub-Api-Version: 2022-11-28`, and the body `{"ref":"main"}`. A test run should answer **204**.
 
 **Local preview** (offline, uses the checked-in synthetic mock data):
 
