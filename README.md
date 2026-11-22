@@ -39,9 +39,11 @@ About 10 more lessons · 4 h 36 min left today.
 | State | When | Title (example) | Priority |
 |---|---|---|---|
 | Last call | the last nudge hour | `🚨 Last call: 37 min to go` (body asks you to save the streak if today hasn't extended it) | high |
-| Behind pace | minutes left > half the minutes left in the day | `⚠️ Behind pace: 37 min to go` | high |
-| Not started | no lessons yet | `🦉 Time for today's 60 min` | default |
+| Behind pace | more than 10 min behind a steady pace (see below) | `⚠️ Behind pace: 40 min to go` | high |
+| Not started | no lessons yet, and not behind (in practice the first nudge) | `🦉 Time for today's 60 min` | default |
 | On pace | otherwise | `🦉 37 min to go · 23 of 60 done` | default |
+
+**Steady pace** runs from the first nudge hour to the last: 0 min at 12:00, the full goal at 22:00. With a 60-minute goal that's about 25 min at the 16:07 nudge, 43 min at 19:07 and 55 min at 21:07. You're behind pace when you're more than 10 minutes short of that (`PACE_SLACK_MIN` in `duo_nudge.py`), so a lesson or two behind doesn't trigger a high-priority alert.
 
 - **Tap** opens Duolingo (`duolingo://`). Two buttons: **Open Duolingo** and **Dashboard** (`DUO_DASHBOARD_URL`).
 - **No emoji tags.** ntfy turns tags like `owl` into an emoji and adds it to the title, which used to give you two owls. The emoji now lives only in the title.
@@ -56,7 +58,7 @@ Edit the `env:` block in `.github/workflows/nudge.yml`:
 | Variable | Default | Meaning |
 |---|---|---|
 | `DUO_GOAL_MINUTES` | `60` | Daily goal |
-| `DUO_NUDGE_HOURS` | `12,16,19,21,22` | Local hours to nudge. The last one is the "last call" |
+| `DUO_NUDGE_HOURS` | `12,16,19,21,22` | Local hours to nudge. The first and last also set the steady-pace window, and the last one is the "last call" |
 | `DUO_TZ` | `Europe/Zurich` | Your time zone |
 | `DUO_DASHBOARD_URL` | the Pages URL | Where the notification's *Dashboard* button goes |
 

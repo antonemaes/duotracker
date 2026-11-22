@@ -57,6 +57,10 @@ API = "https://www.duolingo.com/2017-06-30"
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/130.0 Safari/537.36")
 
+# "Behind pace" only when you're more than this many minutes behind a steady pace,
+# so being a lesson or two behind doesn't turn the nudge into a high-priority alert.
+PACE_SLACK_MIN = 10
+
 
 # ---------- config ----------
 
@@ -161,13 +165,31 @@ def fmt_hours(hours):
     return f"{m // 60} h {m % 60} min" if m >= 60 else f"{m} min"
 
 
-def build_message(done, sessions, goal, now, last_hour, streak=None, extended=False):
+def pace_target(goal, now, first_hour, last_hour):
+    """Minutes a steady pace would have done by `now`.
+
+    The pace runs from the first nudge hour (0 min) to the last one (the full goal),
+    so with the default hours you're "on pace" at 30 min by 17:00 and done by 22:00.
+    """
+    if last_hour <= first_hour:
+        return float(goal) if now.hour >= last_hour else 0.0
+    h = now.hour + now.minute / 60
+    return goal * min(1.0, max(0.0, (h - first_hour) / (last_hour - first_hour)))
+
+
+def build_message(done, sessions, goal, now, hours, streak=None, extended=False):
     """Return (title, body, priority) for the ntfy push.
 
-    Four states, most urgent first: last call, behind pace, not started, on pace.
+    `hours` are the nudge hours (sorted). Four states, most urgent first:
+      last call    the last nudge hour
+      behind pace  more than PACE_SLACK_MIN behind a steady pace (see pace_target)
+      not started  no lessons yet, but not behind (in practice: the first nudge)
+      on pace      everything else
     The title carries the one number that matters (minutes left); the body says
     what's done and what to do next. Plain text: ntfy's iOS app doesn't render Markdown.
     """
+    first_hour, last_hour = hours[0], hours[-1]
+    target = pace_target(goal, now, first_hour, last_hour)
     left = max(0, round(goal - done))
     midnight = datetime.combine(now.date() + timedelta(days=1), datetime.min.time(), now.tzinfo)
     hours_left = (midnight - now).total_seconds() / 3600
@@ -187,10 +209,11 @@ def build_message(done, sessions, goal, now, last_hour, streak=None, extended=Fa
         else:
             lines.append("One focused session now gets you there.")
         priority = "high"
-    elif left > hours_left * 60 * 0.5:
+    elif done < target - PACE_SLACK_MIN:
         title = f"⚠️ Behind pace: {left} min to go"
-        lines = [f"{done_r} of {goal} min · {lessons} so far.",
-                 f"Only {hl} left today. " + (f"{more_txt} - start now." if more_txt else "Start a lesson now.")]
+        lines = [f"{done_r} of {goal} min · {lessons} so far." if sessions else "No lessons yet today.",
+                 f"Steady pace by now: {round(target)} min. "
+                 + (f"{more_txt}, start now." if more_txt else "Start a lesson now.")]
         priority = "high"
     elif sessions == 0:
         title = f"🦉 Time for today's {goal} min"
@@ -252,7 +275,7 @@ def main():
         return
 
     streak = fetch_streak(cfg)
-    title, body, priority = build_message(done, sessions, cfg["goal"], now, cfg["hours"][-1],
+    title, body, priority = build_message(done, sessions, cfg["goal"], now, cfg["hours"],
                                           streak=streak, extended=extended)
     if args.dry_run:
         print(f"\n[{priority}] {title}\n{body}")
