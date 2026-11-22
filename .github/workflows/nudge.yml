@@ -13,12 +13,19 @@ on:
         type: boolean
         default: true
 
+# Least privilege: this job only reads the code. Its GitHub token can't push,
+# change settings or touch other workflows, whatever the repo-wide default is.
+permissions:
+  contents: read
+
 jobs:
   nudge:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false   # don't leave the token in .git/config for later steps
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

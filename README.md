@@ -97,6 +97,7 @@ The open page re-fetches `data.json` every minute, and again whenever you come b
 
 1. **Settings → Pages → Build and deployment → Source: _GitHub Actions_.** This replaces the old "Deploy from a branch" setup.
 2. Free plan: Pages only serves *public* repos.
+3. **Settings → Actions → General → Workflow permissions: _Read repository contents_.** No workflow commits anymore, and each workflow asks for exactly the permissions it needs (`contents: read`, plus `pages`/`id-token` for the deploy).
 
 Then *Run workflow* once, or push. The site stays at `https://antonemaes.github.io/duotracker/`.
 
