@@ -26,6 +26,8 @@ Config (environment variables)
   DUO_PROJECTION_END      optional  ISO date the projection runs to    (default 2027-03-31)
   DUO_PROJECTION_SECTIONS optional  comma-separated section numbers  (default 5,6)
   DASHBOARD_OUT           optional  output HTML file                   (default index.html)
+  DUO_REPO                optional  GitHub "owner/repo" for the page's refresh link
+                                                      (default antonemaes/duotracker)
 
 Both endpoints are unofficial and undocumented; either could change or break at any time.
 
@@ -83,6 +85,7 @@ def load_config(args):
         "proj_end": date.fromisoformat(env("DUO_PROJECTION_END", "2027-03-31")),
         "proj_sections": sorted(int(s) for s in env("DUO_PROJECTION_SECTIONS", "5,6").split(",")),
         "out": Path(args.out or env("DASHBOARD_OUT", "index.html")),
+        "repo": env("DUO_REPO", "antonemaes/duotracker"),
     }
 
 
@@ -345,7 +348,11 @@ body { margin: 0; background: #0f171a; color: #e8f1f2;
        font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
 main { max-width: 880px; margin: 0 auto; padding: 16px 14px 40px; }
 header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px; }
+header > span { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 h1 { font-size: clamp(20px, 5vw, 28px); margin: 6px 0; }
+a.refresh { color: #58cc02; border: 1px solid #58cc02; border-radius: 999px; padding: 3px 12px;
+            font-size: 13px; text-decoration: none; white-space: nowrap; }
+a.refresh:hover { background: #58cc02; color: #0f171a; }
 .muted { color: #8fa6ad; font-size: 13px; }
 .cards { display: grid; gap: 10px; margin: 14px 0; }
 .projection { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
@@ -364,7 +371,7 @@ footer { color: #5f7a82; font-size: 12px; margin-top: 18px; line-height: 1.5; }
 """
 
 
-def render_html(now, today, days, ma7, cum, course, current_unit, sec_dates, svg, proj_end, wanted, week_target):
+def render_html(now, today, days, ma7, cum, course, current_unit, sec_dates, svg, proj_end, wanted, week_target, repo):
     total = cum[-1][1] if cum else 0
     lessons_today = days[-1][1]
     week_start = today - timedelta(days=today.weekday())
@@ -373,6 +380,7 @@ def render_html(now, today, days, ma7, cum, course, current_unit, sec_dates, svg
     c_fin, c_tot = course.get("finished", 0), course.get("total", 0)
     c_pct = min(100, round(100 * c_fin / c_tot)) if c_tot else 0
     now_line = f" · now: {html.escape(current_unit)}" if current_unit else ""
+    refresh_url = f"https://github.com/{html.escape(repo)}/actions/workflows/dashboard.yml"
 
     def sec_card(n):
         label = f"Section {n}"
@@ -414,7 +422,10 @@ def render_html(now, today, days, ma7, cum, course, current_unit, sec_dates, svg
 <main>
   <header>
     <h1>🦉 {course_title}</h1>
-    <span class="muted">updated {now:%Y-%m-%d %H:%M %Z}{now_line}</span>
+    <span>
+      <span class="muted">updated {now:%Y-%m-%d %H:%M %Z}{now_line}</span>
+      <a class="refresh" href="{refresh_url}" target="_blank" rel="noopener" title="Trigger the dashboard workflow on GitHub, then press 'Run workflow'">🔄 refresh</a>
+    </span>
   </header>
 
   <section class="cards projection">
@@ -491,7 +502,7 @@ def main():
 
     svg = render_chart(chart_days, chart_weeks, chart_cum, proj, today, cfg["proj_end"], sec_dates, cfg["weekly_target"])
     page = render_html(now, today, days, ma7, cum, course, current_unit,
-                       sec_dates, svg, cfg["proj_end"], cfg["proj_sections"], cfg["weekly_target"])
+                       sec_dates, svg, cfg["proj_end"], cfg["proj_sections"], cfg["weekly_target"], cfg["repo"])
     cfg["out"].write_text(page, encoding="utf-8")
 
     print(f"Wrote {cfg['out']} ({cfg['out'].stat().st_size:,} bytes)")

@@ -55,7 +55,7 @@ The page shows:
 - **Stat cards:** lessons today, this week, 7-day average, course progress (path lessons done/total, live), total lessons.
 - **Chart:** bars = lessons per week (left axis), **green if the week hit the target (≥175 = 25/day × 7), red if below** (a small red tick marks a zero-lesson week), with a dashed target line. Blue line = cumulative lessons (right axis), dashed = projection at the 7-day average out to **end of Q1 2027** (`2027-03-31`), with markers where the projection crosses your section milestones. The header also shows the unit you're currently on.
 
-**Daily updates:** `.github/workflows/dashboard.yml` runs once a day (plus a manual *Run workflow* button), regenerates `index.html`, and commits it back to the repo. Two one-time setup steps:
+**Daily updates:** `.github/workflows/dashboard.yml` runs once a day, regenerates `index.html`, and commits it back to the repo. **Manual refresh:** the 🔄 refresh button in the page header links to the workflow page (Actions → *Run workflow*), or use the *Run workflow* button directly in the Actions tab. Two one-time setup steps:
 
 1. Settings → Actions → General → Workflow permissions → allow **Read and write permissions** (so the workflow can commit).
 2. Settings → Pages → Source: *Deploy from a branch* → `main` / `(root)`. Because the file is named `index.html`, the dashboard is served at the site **root**: `https://antonemaes.github.io/duotracker/` — add that to your phone's home screen. (Note: on a free GitHub plan, Pages only serves *public* repos — make the repo public, or use a paid plan to keep it private.)
@@ -78,6 +78,7 @@ Dashboard env vars (set in the `env:` block of `.github/workflows/dashboard.yml`
 | `DUO_PROJECTION_SECTIONS` | `5,6` | Which sections get completion-date cards |
 | `DUO_MOCK_JSON` / `DUO_MOCK_COURSE_JSON` | — | Saved API responses for offline runs |
 | `DASHBOARD_OUT` | `index.html` | Output file (name it `index.html` so Pages serves it at the site root) |
+| `DUO_REPO` | `antonemaes/duotracker` | `owner/repo` used for the in-page 🔄 refresh link |
 
 ## Things to know
 
