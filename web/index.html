@@ -1196,6 +1196,7 @@ footer a:hover { border-bottom-color: var(--ink-2); }
         return;
       }
       refresh(false);
+      if (!waiting.viaGithub && !waiting.starting) checkRun();
     }, WAIT_POLL_MS);
     waiting.tick = setInterval(() => updateLive(), 1000);
     updateLive();
@@ -1204,6 +1205,27 @@ footer a:hover { border-bottom-color: var(--ink-2); }
     if (waiting) { clearInterval(waiting.poll); clearInterval(waiting.tick); }
     waiting = null;
     updateLive();
+  }
+
+  // While waiting, ask GitHub how the run we started is doing, so a failed run is
+  // reported within seconds instead of after the 5-minute timeout.
+  async function checkRun() {
+    const token = getToken();
+    if (!token || !waiting) return;
+    try {
+      const r = await fetch(`https://api.github.com/repos/${repoName()}/actions/workflows/dashboard.yml/runs?event=workflow_dispatch&per_page=1`, {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
+        cache: "no-store",
+      });
+      if (!r.ok || !waiting) return;
+      const run = ((await r.json()).workflow_runs || [])[0];
+      // only the run this tap started (allow for a phone clock that's a bit off)
+      if (!run || Date.parse(run.created_at) < waiting.t0 - 90 * 1000) return;
+      if (run.status === "completed" && run.conclusion !== "success") {
+        stopWaiting();
+        toast(`The update failed on GitHub (${run.conclusion}). Tap ↻ to try again.`, 9000);
+      }
+    } catch (e) { /* the data.json polling keeps going either way */ }
   }
 
   async function startRun(token) {

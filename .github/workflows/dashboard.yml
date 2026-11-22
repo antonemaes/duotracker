@@ -32,12 +32,12 @@ jobs:
     timeout-minutes: 5
     environment:
       name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+      url: ${{ steps.deploy.outputs.page_url || steps.deploy_retry.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false   # nothing pushes; don't leave the token in .git/config
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       # Two small calls: xp_summaries (~1 KB gzipped) and users/{id} with a nested field
@@ -54,9 +54,18 @@ jobs:
           DUO_PROJECTION_GROUPS: "B1=5,6;B2=7,8"  # finish-date cards per level (sections numbered like the app)
           DUO_REPO: ${{ github.repository }} # for the page's links
         run: python duo_dashboard.py --out-dir _site
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
+      # GitHub's artifact lookup is occasionally flaky ("No artifacts named github-pages
+      # were found") right after the upload succeeded, so try the deploy once more.
       - id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
+        continue-on-error: true
+      - name: Wait before retrying the deploy
+        if: steps.deploy.outcome == 'failure'
+        run: sleep 20
+      - id: deploy_retry
+        if: steps.deploy.outcome == 'failure'
+        uses: actions/deploy-pages@v5
