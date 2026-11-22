@@ -80,7 +80,7 @@ The open page re-fetches `data.json` every minute, and again whenever you come b
 - **Today:** activity-style rings for lessons vs `DUO_DAILY_TARGET` (outer) and minutes vs `DUO_GOAL_MINUTES` (inner), streak, XP, and how many lessons are still to go.
 - **Level finish cards** for `DUO_PROJECTION_GROUPS`: by default **B1 (Sections 5–6)** and **B2 (Sections 7–8)**. Each card shows the projected date the level is finished, days left, lessons to go (counting every unfinished lesson up to the level's last section), a progress bar across the level's sections, and a what-if date at your daily target pace.
 - **Key numbers:** this week vs target, the daily average with its change vs the 7 days before, course % complete, and total XP.
-- **Activity:** Weeks / Days / Total views. Weeks and days are colored by target (green = hit). Tap or hover any bar for details, and *Show as table* gives the same numbers as a table.
+- **Activity:** Days / Weeks / Total views, opening on **Days**: lessons per day for the last 4 weeks, with a dashed line at the daily target. Weeks show volume only (no target line), and Total is the cumulative line. Tap or hover any bar for details, and *Show as table* gives the same numbers as a table.
 - **Consistency:** a calendar heatmap since `DUO_CHART_START`, plus active days, target days, best day and lessons per active day.
 - **Course path:** every section with its CEFR level, progress and its own ETA. "You're here" marks your current unit.
 - **Add to Home Screen** on iPhone gives a full-screen app with its own icon. Shared links show a preview card (`og.png`).
@@ -122,8 +122,8 @@ Dashboard env vars (set in the `env:` block of `.github/workflows/dashboard.yml`
 |---|---|---|
 | `DUO_HISTORY_DAYS` | `365` | How much history to fetch |
 | `DUO_CHART_START` | `2026-10-01` | Where the weekly/total charts and the heatmap start |
-| `DUO_DAILY_TARGET` | `25` | Lessons per day: outer ring, daily bars, heatmap, what-if dates |
-| `DUO_WEEKLY_TARGET` | `175` | Lessons per week: weekly bar coloring (25/day × 7) |
+| `DUO_DAILY_TARGET` | `25` | Lessons per day: outer ring, the target line on the daily chart, heatmap, what-if dates |
+| `DUO_WEEKLY_TARGET` | `175` | Lessons per week: the *This week* tile only (25/day × 7) |
 | `DUO_GOAL_MINUTES` | `60` | Minutes per day: inner ring (same variable as the nudge) |
 | `DUO_PROJECTION_GROUPS` | `B1=5,6;B2=7,8` | Finish-date cards: `name=sections`, separated by `;` (sections numbered like the app). A plain list such as `5,6` gives one card per section |
 | `DUO_REPO` | `antonemaes/duotracker` | `owner/repo` for the page's links (the workflow passes `github.repository`) |

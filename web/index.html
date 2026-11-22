@@ -250,7 +250,6 @@ main {
 .tick { fill: var(--muted); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .bar { transition: opacity .15s, filter .15s; }
 .bar.good { fill: var(--good); }
-.bar.base { fill: var(--bar-base); }
 .bar.partial { opacity: .6; }
 .bar.hot { filter: brightness(1.18) saturate(1.1); opacity: 1; }
 .grow { transform-box: fill-box; transform-origin: 50% 100%; animation: grow .7s cubic-bezier(.2, .8, .2, 1) both; }
@@ -270,8 +269,6 @@ main {
 .legend { display: flex; gap: 8px 16px; flex-wrap: wrap; color: var(--ink-2); font-size: 12.5px; font-weight: 600; margin-top: 10px; }
 .legend span { display: inline-flex; align-items: center; gap: 7px; }
 .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
-.sw.good { background: var(--good); }
-.sw.base { background: var(--bar-base); }
 .sw.dash { width: 16px; height: 0; border-top: 2px dashed var(--target); opacity: .55; border-radius: 0; }
 details.table { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
 details.table summary { cursor: pointer; font-size: 12.5px; font-weight: 700; color: var(--muted); list-style: none; }
@@ -420,8 +417,8 @@ footer a:hover { border-bottom-color: var(--ink-2); }
       <div class="card-head">
         <div><h2 id="actTitle">Activity</h2><p id="actSub"></p></div>
         <div class="seg" role="tablist" aria-label="Chart view">
-          <button type="button" role="tab" data-view="weeks" aria-selected="true">Weeks</button>
-          <button type="button" role="tab" data-view="days" aria-selected="false">Days</button>
+          <button type="button" role="tab" data-view="days" aria-selected="true">Days</button>
+          <button type="button" role="tab" data-view="weeks" aria-selected="false">Weeks</button>
           <button type="button" role="tab" data-view="total" aria-selected="false">Total</button>
         </div>
       </div>
@@ -467,7 +464,7 @@ footer a:hover { border-bottom-color: var(--ink-2); }
 
   let data = null;
   try { data = JSON.parse($("seed").textContent); } catch (e) { data = null; }
-  let view = "weeks";
+  let view = "days";
   let fetching = false;
   let lastCheck = 0;
   let D = null;                       // derived view model of `data`
@@ -804,7 +801,7 @@ footer a:hover { border-bottom-color: var(--ink-2); }
       const hgt = it.value > 0 ? Math.max(3, Y(0) - Y(it.value)) : 2;
       const bar = s("path", {
         d: barPath(x, Y(0) - hgt, bw, hgt, it.value > 0 ? 4 : 1),
-        class: `bar ${it.hit ? "good" : "base"}${it.partial ? " partial" : ""}${animate && !reduceMotion ? " grow" : ""}`,
+        class: `bar good${it.partial ? " partial" : ""}${animate && !reduceMotion ? " grow" : ""}`,
       }, bars);
       if (animate) bar.style.animationDelay = `${Math.min(i * 22, 500)}ms`;
       if ((n - 1 - i) % every === 0) txt(svg, { x: cx, y: H - 7, class: "tick", "text-anchor": "middle" }, it.x);
@@ -901,26 +898,27 @@ footer a:hover { border-bottom-color: var(--ink-2); }
     const key = (cls, label) => { const sp = h("span"); sp.appendChild(h("i", "sw " + cls)); sp.appendChild(document.createTextNode(label)); legend.appendChild(sp); };
     let rows, head;
     if (view === "weeks") {
+      // Volume only: no weekly target line and no hit/miss colouring.
+      const perDay = (w) => w.lessons / (w.partial ? Math.round((D.todayDate - w.start) / DAY) + 1 : 7);
       const items = D.weeks.map((w) => ({
-        value: w.lessons, hit: w.lessons >= T.weeklyLessons, partial: w.partial, x: dayMonth(w.start),
-        tip: [plural(w.lessons, "lesson"), `Week of ${dayMonth(w.start)}${w.partial ? " · so far" : ""}`,
-          w.lessons >= T.weeklyLessons ? "✓ Weekly target hit" : `${pct(w.lessons, T.weeklyLessons)}% of the ${T.weeklyLessons} target`],
+        value: w.lessons, partial: w.partial, x: dayMonth(w.start),
+        tip: [plural(w.lessons, "lesson"), `Week of ${dayMonth(w.start)}${w.partial ? " · so far" : ""}`, `${f1(perDay(w))} a day`],
       }));
       $("actSub").textContent = `Lessons per week since ${dayMonth(D.chartStart)}`;
-      barChart(host, { items, target: T.weeklyLessons, height: H, minLabelGap: 46, aria: `Weekly lessons since ${fullDate(D.chartStart)}, target ${T.weeklyLessons} per week` }, animate);
-      key("good", "Target hit"); key("base", "Below target"); key("dash", `Target ${T.weeklyLessons} / week`);
-      head = ["Week of", "Lessons", "Of target"];
-      rows = D.weeks.slice().reverse().map((w) => [dayMonth(w.start) + (w.partial ? " (so far)" : ""), nf.format(w.lessons), `${pct(w.lessons, T.weeklyLessons)}%`]);
+      barChart(host, { items, height: H, minLabelGap: 46, aria: `Weekly lessons since ${fullDate(D.chartStart)}` }, animate);
+      head = ["Week of", "Lessons", "Per day"];
+      rows = D.weeks.slice().reverse().map((w) => [dayMonth(w.start) + (w.partial ? " (so far)" : ""), nf.format(w.lessons), f1(perDay(w))]);
     } else if (view === "days") {
       const last = D.days.slice(-28);
       const items = last.map((x, i) => ({
-        value: x.lessons, hit: x.lessons >= T.dailyLessons, partial: i === last.length - 1 && !D.staleDay,
+        value: x.lessons, partial: i === last.length - 1 && !D.staleDay,
         x: dayMonth(x.date),
-        tip: [plural(x.lessons, "lesson"), weekdayDate(x.date), `${nf.format(x.minutes)} min · ${nf.format(x.xp)} XP`],
+        tip: [plural(x.lessons, "lesson"), weekdayDate(x.date),
+          `${nf.format(x.minutes)} min · ${nf.format(x.xp)} XP${x.lessons >= T.dailyLessons ? " · ✓ target hit" : ""}`],
       }));
       $("actSub").textContent = "Lessons per day, last 4 weeks";
-      barChart(host, { items, target: T.dailyLessons, height: H, minLabelGap: 52, aria: `Daily lessons for the last 28 days, target ${T.dailyLessons} per day` }, animate);
-      key("good", "Target hit"); key("base", "Below target"); key("dash", `Target ${T.dailyLessons} / day`);
+      barChart(host, { items, target: T.dailyLessons, height: H, minLabelGap: 52, aria: `Daily lessons for the last 28 days, daily target ${T.dailyLessons}` }, animate);
+      key("dash", `Daily target ${T.dailyLessons}`);
       head = ["Day", "Lessons", "Minutes"];
       rows = last.slice().reverse().map((x) => [weekdayDate(x.date), nf.format(x.lessons), nf.format(x.minutes)]);
     } else {
