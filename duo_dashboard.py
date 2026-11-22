@@ -9,11 +9,10 @@ How it works
   2. Fetches users/{id}?fields=currentCourse - one BIG call (~9 MB). currentCourse.pathSectioned
      contains every section, unit and step with totalSessions/finishedSessions, so remaining
      lessons per section are read live (no hand-maintained config). Run this DAILY, never hourly.
-  3. Builds weekly lesson totals (bars) and cumulative lessons (line).
-  4. Projects cumulative lessons forward at the 7-day moving average until
-     DUO_PROJECTION_END (default 2027-03-31, i.e. end of Q1 2027).
-  5. Projects each section's completion date from its live remaining lessons divided by the
-     7-day average. The cards go at the top of the page.
+  3. Builds weekly lesson totals (bars) and a cumulative-lessons line. The graph ends at
+     "today" - no projection line; the section dates are in the cards above the stats.
+  4. Projects each section's completion date from its live remaining lessons divided by the
+     7-day average. The cards go below the hero ring.
 
 Config (environment variables)
   DUO_JWT                 required (unless mocked)  Duolingo jwt_token cookie
@@ -24,7 +23,6 @@ Config (environment variables)
   DUO_CHART_START         optional  ISO date the graph's x-axis starts (default 2026-10-01)
   DUO_DAILY_TARGET        optional  daily lessons target for the hero ring (default 25)
   DUO_WEEKLY_TARGET       optional  weekly lessons target; bars >= this are green (default 175 = 25/day)
-  DUO_PROJECTION_END      optional  ISO date the projection runs to    (default 2027-03-31)
   DUO_PROJECTION_SECTIONS optional  comma-separated section numbers  (default 5,6)
   DASHBOARD_OUT           optional  output HTML file                   (default index.html)
   DUO_REPO                optional  GitHub "owner/repo" for the page's refresh link
@@ -85,7 +83,6 @@ def load_config(args):
         "chart_start": date.fromisoformat(args.chart_start or env("DUO_CHART_START", "2026-10-01")),
         "daily_target": args.daily_target or int(env("DUO_DAILY_TARGET", "25")),
         "weekly_target": args.weekly_target or int(env("DUO_WEEKLY_TARGET", "175")),
-        "proj_end": date.fromisoformat(env("DUO_PROJECTION_END", "2027-03-31")),
         "proj_sections": sorted(int(s) for s in env("DUO_PROJECTION_SECTIONS", "5,6").split(",")),
         "out": Path(args.out or env("DASHBOARD_OUT", "index.html")),
         "repo": env("DUO_REPO", "antonemaes/duotracker"),
@@ -262,18 +259,19 @@ def moving_avg7(days):
 
 # ---------- chart (inline SVG, no external deps) ----------
 
-def render_chart(days, weeks, cum, proj, today, x_end, section_dates, week_target):
+def render_chart(days, weeks, cum, today, week_target):
     W, H = 720, 400
     ml, mr, mt, mb = 46, 54, 34, 40
     pw, ph = W - ml - mr, H - mt - mb
     x0 = days[0][0]
+    x_end = today                       # the graph ends at today - no projection
     span = max((x_end - x0).days, 30)
 
     def X(d):
         return ml + (d - x0).days / span * pw
 
     max_bar = max([l for _, l in weeks] + [week_target, 5])   # left axis: lessons / week
-    max_cum = max([c for _, c in cum + proj] + [10])          # right axis: cumulative lessons
+    max_cum = max([c for _, c in cum] + [10])                 # right axis: cumulative lessons
 
     def YL(v):
         return mt + ph - v / max_bar * ph
@@ -282,7 +280,7 @@ def render_chart(days, weeks, cum, proj, today, x_end, section_dates, week_targe
         return mt + ph - v / max_cum * ph
 
     p = [f'<svg viewBox="0 0 {W} {H}" role="img" '
-         f'aria-label="Bars: lessons per week. Line: cumulative lessons, dashed projection to {x_end}.">']
+         f'aria-label="Bars: lessons per week, colored by the {week_target}/week target. Line: cumulative lessons up to {x_end}.">']
 
     for i in range(6):
         v = max_bar * i / 5
@@ -324,19 +322,10 @@ def render_chart(days, weeks, cum, proj, today, x_end, section_dates, week_targe
 
     p.append('<polyline points="' + " ".join(f"{X(d):.1f},{YR(c):.1f}" for d, c in cum)
              + '" fill="none" stroke="#1cb0f6" stroke-width="2.5" stroke-linejoin="round"/>')
-    p.append('<polyline points="' + " ".join(f"{X(d):.1f},{YR(c):.1f}" for d, c in proj)
-             + '" fill="none" stroke="#1cb0f6" stroke-width="2.5" stroke-dasharray="6 5" opacity="0.85"/>')
 
     x = X(today)
     p.append(f'<line x1="{x:.1f}" y1="{mt}" x2="{x:.1f}" y2="{mt + ph}" stroke="#ff4b4b" stroke-width="1.5"/>')
-    p.append(f'<text x="{x:.1f}" y="{mt - 10}" fill="#ff4b4b" font-size="11" text-anchor="middle">today</text>')
-
-    for key, (d, _r, _n, _t) in section_dates.items():
-        if d > x_end:
-            continue
-        x = X(d)
-        p.append(f'<line x1="{x:.1f}" y1="{mt}" x2="{x:.1f}" y2="{mt + ph}" stroke="#ffc800" stroke-width="1.5" stroke-dasharray="4 4"/>')
-        p.append(f'<text x="{x:.1f}" y="{mt + ph + 17}" fill="#ffc800" font-size="11" text-anchor="middle">S{key} {d:%d %b}</text>')
+    p.append(f'<text x="{x:.1f}" y="{mt - 10}" fill="#ff4b4b" font-size="11" text-anchor="end">today</text>')
 
     p.append('</svg>')
     return "".join(p)
@@ -445,7 +434,7 @@ REFRESH_JS = r"""<script>
 </script>"""
 
 
-def render_html(now, today, days, ma7, cum, course, current_unit, sec_dates, svg, proj_end, wanted, week_target, repo, daily_target):
+def render_html(now, today, days, ma7, cum, course, current_unit, sec_dates, svg, wanted, week_target, repo, daily_target):
     total = cum[-1][1] if cum else 0
     lessons_today = days[-1][1]
     week_start = today - timedelta(days=today.weekday())
@@ -527,15 +516,13 @@ def render_html(now, today, days, ma7, cum, course, current_unit, sec_dates, svg
       <span><span class="sw" style="background:#58cc02"></span>week ≥ {week_target} lessons</span>
       <span><span class="sw" style="background:#ff4b4b"></span>week &lt; {week_target} (left axis)</span>
       <span><span class="sw line" style="background:#1cb0f6"></span>cumulative lessons (right axis)</span>
-      <span><span class="sw line" style="background:#1cb0f6;opacity:.7"></span>projection @ {ma7:.1f}/day to {proj_end:%d %b %Y}</span>
-      <span><span class="sw line" style="background:#ffc800"></span>section milestones</span>
     </div>
   </section>
 
   <footer>
     Generated {now:%Y-%m-%d %H:%M %Z} by duo_dashboard.py from Duolingo's unofficial endpoints
     (xp_summaries for history; users/&#123;id&#125;?fields=currentCourse for live path progress).
-    Projection assumes a constant {ma7:.1f} lessons/day (7-day moving average).
+    Section dates assume a constant {ma7:.1f} lessons/day (7-day moving average).
   </footer>
 </main>
 {REFRESH_JS}
@@ -561,8 +548,6 @@ def main():
     cfg = load_config(args)
     now = datetime.now(cfg["tz"])
     today = now.date()
-    if cfg["proj_end"] <= today:
-        sys.exit(f"DUO_PROJECTION_END ({cfg['proj_end']}) must be in the future")
     start = today - timedelta(days=cfg["days"] - 1)
 
     data = fetch_range(cfg, start, today)
@@ -576,8 +561,6 @@ def main():
     cum = cumulative(days)
     ma7 = moving_avg7(days)
     total = cum[-1][1] if cum else 0
-    proj = [(today + timedelta(days=n), total + ma7 * n)
-            for n in range((cfg["proj_end"] - today).days + 1)]
 
     course = parse_course(course_raw)
     current_unit = course["current_unit"]
@@ -589,9 +572,9 @@ def main():
     chart_cum = [(d, c) for d, c in cum if d >= chart_days[0][0]] or cum
     chart_weeks = [(ws, l) for ws, l in weeks if ws + timedelta(days=7) > chart_days[0][0]]
 
-    svg = render_chart(chart_days, chart_weeks, chart_cum, proj, today, cfg["proj_end"], sec_dates, cfg["weekly_target"])
+    svg = render_chart(chart_days, chart_weeks, chart_cum, today, cfg["weekly_target"])
     page = render_html(now, today, days, ma7, cum, course, current_unit,
-                       sec_dates, svg, cfg["proj_end"], cfg["proj_sections"], cfg["weekly_target"], cfg["repo"],
+                       sec_dates, svg, cfg["proj_sections"], cfg["weekly_target"], cfg["repo"],
                        cfg["daily_target"])
     cfg["out"].write_text(page, encoding="utf-8")
 
