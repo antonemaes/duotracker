@@ -79,7 +79,8 @@ The open page re-fetches `data.json` every minute, and again whenever you come b
 
 **What's on the page** (mobile-first; 2 columns on tablets, a 12-column grid on desktop; light and dark mode follow the system):
 
-- **Today:** activity-style rings for lessons vs `DUO_DAILY_TARGET` (outer) and minutes vs `DUO_GOAL_MINUTES` (inner), streak, XP, and how many lessons are still to go.
+- **Today:** activity-style rings for Duolingo lessons vs `DUO_DAILY_TARGET` (outer, green) and Deutsche Welle lessons vs `DW_DAILY_TARGET` (inner, blue), streak, XP, and how many lessons of each are still to go. Without DW set up it's a single Duolingo ring.
+- **Deutsche Welle card:** each DW course you've started (plus the main one in `DW_COURSES`) with lessons done, a progress bar, the next lesson (linked) and the finish date at your DW target, next to a 7-day bar chart of DW lessons per day with the target line.
 - **Level finish cards** for `DUO_PROJECTION_GROUPS`: by default **B1 (Sections 5–6)** and **B2 (Sections 7–8)**. Each card shows the projected date the level is finished, days left, lessons to go (counting every unfinished lesson up to the level's last section), a progress bar across the level's sections, and a what-if date at your daily target pace.
 - **Key numbers:** this week vs target, the daily average with its change vs the 7 days before, course % complete, and total XP.
 - **Activity:** Days / Weeks / Total views, opening on **Days**: lessons per day for the last 4 weeks, with a dashed line at the daily target. Weeks show volume only (no target line), and Total is the cumulative line. Tap or hover any bar for details, and *Show as table* gives the same numbers as a table.
@@ -92,6 +93,20 @@ The open page re-fetches `data.json` every minute, and again whenever you come b
 - Sections are numbered **like the app**: Section 1 is the API's index 0. (The old page was off by one, so its "Section 5" card was really Section 6.)
 - A level counts as done once Duolingo marks it passed, even if you jumped past it. **Unit reviews are left out:** Duolingo marks them passed when you finish a unit, whether or not you did them.
 - The finish dates use the **average of the last 7 full days**. Today isn't included, so the dates stay stable through the day instead of jumping every 5 minutes.
+- A **DW lesson** counts as done once every exercise in it is answered (DW's own tick, whatever the score). It counts on the day DW last saved it, so re-doing an exercise in an old lesson moves that lesson to today.
+
+### Deutsche Welle (DW Learn German)
+
+The dashboard also tracks your lessons on [learngerman.dw.com](https://learngerman.dw.com/de/deutsch-lernen/s-9095). By default it follows DW's four **B1** courses: *Nicos Weg* (the main one), *Fit für den Job*, *Berufe entdecken* and *Jojo sucht das Glück*. A lesson finished in any of them counts toward the 4-a-day target.
+
+1. In **Settings → Secrets and variables → Actions**, add `DW_EMAIL` and `DW_PASSWORD` (your DW sign-in). Use a password you don't use anywhere else: it sits in GitHub's secret store, like `DUO_JWT`.
+2. Run the dashboard workflow. Its log shows a `DW B1: … lessons today` line, or a warning saying why DW was skipped.
+
+How it works, per run:
+
+- **Lesson lists:** one call to DW's public GraphQL API (`webapi.dw.com/graphql`, the API its own site uses; no login, about 7 KB gzipped).
+- **Your progress:** DW keeps it per account behind a session cookie, so the script signs in at `/profiles/login`, asks `/profiles/protected/lesson/progress` for every tracked lesson in one POST, then signs out. Each lesson record has `doneExerciseCount`, `allExerciseCount` and `lastModifiedDate`.
+- The progress endpoint is unofficial: if DW changes it or the sign-in fails, the dashboard still deploys, and the DW card says it couldn't update.
 
 ### Deploying (one-time setup)
 
@@ -146,8 +161,12 @@ Dashboard env vars (set in the `env:` block of `.github/workflows/dashboard.yml`
 | `DUO_CHART_START` | `2026-10-01` | Where the weekly/total charts and the heatmap start |
 | `DUO_DAILY_TARGET` | `25` | Lessons per day: outer ring, the target line on the daily chart, heatmap, what-if dates |
 | `DUO_WEEKLY_TARGET` | `175` | Lessons per week: the *This week* tile only (25/day × 7) |
-| `DUO_GOAL_MINUTES` | `60` | Minutes per day: inner ring (same variable as the nudge) |
 | `DUO_PROJECTION_GROUPS` | `B1=5,6;B2=7,8` | Finish-date cards: `name=sections`, separated by `;` (sections numbered like the app). A plain list such as `5,6` gives one card per section |
+| `DW_EMAIL` / `DW_PASSWORD` | none | Your DW sign-in (secrets). Without them DW is left out |
+| `DW_DAILY_TARGET` | `4` | DW lessons per day: inner ring, the target line on the DW chart, finish dates |
+| `DW_COURSES` | the four B1 courses | DW course ids (the number after `/c-` in a course URL), main one first |
+| `DW_LEVEL` | `B1` | Label on the DW card and ring key |
+| `DW_MOCK_COURSES_JSON` / `DW_MOCK_PROGRESS_JSON` | none | Saved DW responses for offline runs |
 | `DUO_REPO` | `antonemaes/duotracker` | `owner/repo` for the page's links (the workflow passes `github.repository`) |
 | `DUO_PAGE_URL` | `https://<owner>.github.io/<repo>/` | Public URL, used for the link-preview tags |
 | `DASHBOARD_OUT_DIR` | `_site` | Output folder |
@@ -159,7 +178,7 @@ Dashboard env vars (set in the `env:` block of `.github/workflows/dashboard.yml`
 .venv\Scripts\python -m unittest discover -s tests
 ```
 
-These cover course parsing (section numbering, unit reviews, current unit), projections, the `data.json` shape, the HTML escaping of the inlined data, and every notification state.
+These cover course parsing (section numbering, unit reviews, current unit), projections, DW lesson counting (local day, done rule, which courses show), the `data.json` shape, the HTML escaping of the inlined data, and every notification state.
 
 ## Things to know
 

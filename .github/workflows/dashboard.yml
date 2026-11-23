@@ -40,18 +40,24 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      # Two small calls: xp_summaries (~1 KB gzipped) and users/{id} with a nested field
-      # filter (~22 KB gzipped, instead of the 9 MB unfiltered currentCourse).
+      # Duolingo: xp_summaries (~1 KB gzipped) and users/{id} with a nested field filter
+      # (~22 KB gzipped, instead of the 9 MB unfiltered currentCourse).
+      # Deutsche Welle: the lesson lists (public GraphQL, ~7 KB gzipped), then sign in, read
+      # your progress for those lessons in one call, sign out. Without the DW secrets, or if
+      # DW fails, the dashboard still deploys, just without the DW numbers.
       - name: Build dashboard
         env:
           DUO_JWT: ${{ secrets.DUO_JWT }}
           DUO_TZ: "Europe/Zurich"
           DUO_HISTORY_DAYS: "365"
           DUO_CHART_START: "2026-10-01"      # weekly/total charts start here
-          DUO_DAILY_TARGET: "25"             # lessons per day (hero ring, heatmap)
+          DUO_DAILY_TARGET: "25"             # Duolingo lessons per day (outer ring, heatmap)
           DUO_WEEKLY_TARGET: "175"           # lessons per week (25/day x 7)
-          DUO_GOAL_MINUTES: "60"             # minutes per day (inner ring; same as the nudge)
           DUO_PROJECTION_GROUPS: "B1=5,6;B2=7,8"  # finish-date cards per level (sections numbered like the app)
+          DW_EMAIL: ${{ secrets.DW_EMAIL }}         # learngerman.dw.com sign-in
+          DW_PASSWORD: ${{ secrets.DW_PASSWORD }}
+          DW_DAILY_TARGET: "4"               # DW lessons per day (inner ring)
+          DW_LEVEL: "B1"                     # DW_COURSES defaults to DW's four B1 courses
           DUO_REPO: ${{ github.repository }} # for the page's links
         run: python duo_dashboard.py --out-dir _site
       - uses: actions/configure-pages@v6

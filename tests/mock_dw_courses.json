@@ -1,0 +1,31 @@
+{
+  "data": {
+    "c36519718": {
+      "name": "Nicos Weg",
+      "namedUrl": "/de/nicos-weg/c-36519718",
+      "contentLinks": [
+        {"id": 38462985, "groupName": "Intro zu B1", "target": {"shortTitle": "Berufsberatung", "namedUrl": "/de/berufsberatung/l-38462985"}},
+        {"id": 38462119, "groupName": "Intro zu B1", "target": {"shortTitle": "Meine Muttersprache", "namedUrl": "/de/meine-muttersprache/l-38462119"}},
+        {"id": 38463139, "groupName": "1 Neue Wege", "target": {"shortTitle": "Bei der Arbeit", "namedUrl": "/de/bei-der-arbeit/l-38463139"}},
+        {"id": 38463290, "groupName": "1 Neue Wege", "target": {"shortTitle": "Zukunftspläne", "namedUrl": "/de/zukunftspläne/l-38463290"}}
+      ]
+    },
+    "c73052672": {
+      "name": "Fit für den Job",
+      "namedUrl": "/de/fit-für-den-job/c-73052672",
+      "contentLinks": [
+        {"id": 72632565, "groupName": "Ausbildung", "target": {"shortTitle": "Wege in den Beruf", "namedUrl": "/de/wege-in-den-beruf/l-72632565"}},
+        {"id": 72632566, "groupName": "Ausbildung", "target": {"shortTitle": "Die Bewerbung", "namedUrl": "/de/die-bewerbung/l-72632566"}},
+        {"id": 72632567, "groupName": "Ausbildung", "target": {"shortTitle": "Das Vorstellungsgespräch", "namedUrl": "/de/das-vorstellungsgespräch/l-72632567"}}
+      ]
+    },
+    "c39902336": {
+      "name": "Berufe entdecken",
+      "namedUrl": "/de/berufe-entdecken/c-39902336",
+      "contentLinks": [
+        {"id": 39900001, "groupName": "Handwerk", "target": {"shortTitle": "Tischlerin", "namedUrl": "/de/tischlerin/l-39900001"}},
+        {"id": 39900002, "groupName": "Handwerk", "target": {"shortTitle": "Elektriker", "namedUrl": "/de/elektriker/l-39900002"}}
+      ]
+    }
+  }
+}

@@ -8,7 +8,12 @@ How it works
   2. users/{id} with a NESTED FIELD FILTER: only streak, total XP and the course path's
      section/unit/level counters. The unfiltered currentCourse object is ~9 MB; filtered and
      gzipped it is ~20 KB, which is what makes a 5-minute refresh cheap.
-  3. Writes OUT_DIR/data.json (everything the page shows, ~10 KB) and OUT_DIR/index.html
+  3. Deutsche Welle (learngerman.dw.com), if DW_EMAIL and DW_PASSWORD are set:
+     - the lesson list of each tracked course, from DW's public GraphQL API (no login);
+     - your progress for those lessons: sign in, one POST for all lesson ids, sign out.
+     A lesson counts as done when every exercise in it is answered (DW's own tick), on the
+     day DW last saved it. Any DW failure only skips the DW numbers, never the dashboard.
+  4. Writes OUT_DIR/data.json (everything the page shows, ~10 KB) and OUT_DIR/index.html
      (web/index.html with the same data inlined, so the first paint needs no extra request),
      plus the static assets in web/ (icons, manifest). The open page re-fetches data.json
      every minute, so it updates without a reload.
@@ -23,15 +28,23 @@ Config (environment variables)
   DUO_CHART_START         optional  ISO date the weekly/total charts start (default 2026-10-01)
   DUO_DAILY_TARGET        optional  daily lessons target                (default 25)
   DUO_WEEKLY_TARGET       optional  weekly lessons target               (default 175 = 25/day)
-  DUO_GOAL_MINUTES        optional  daily minutes goal (same as the nudge) (default 60)
   DUO_PROJECTION_GROUPS   optional  finish-date cards: name=sections;... (default B1=5,6;B2=7,8)
+  DW_EMAIL, DW_PASSWORD   optional  your learngerman.dw.com sign-in; without them DW is left out
+  DW_COURSES              optional  DW course ids to track, main one first
+                                    (default: the B1 courses Nicos Weg, Fit für den Job,
+                                    Berufe entdecken and Jojo sucht das Glück)
+  DW_LEVEL                optional  label for the tracked courses       (default B1)
+  DW_DAILY_TARGET         optional  DW lessons per day                  (default 4)
+  DW_MOCK_COURSES_JSON    optional  saved GraphQL course response, for offline runs
+  DW_MOCK_PROGRESS_JSON   optional  saved lesson-progress response, for offline runs
   DASHBOARD_OUT_DIR       optional  output folder                       (default _site)
   DUO_REPO                optional  GitHub "owner/repo", for links      (default antonemaes/duotracker)
   DUO_PAGE_URL            optional  public URL of the page              (default https://<owner>.github.io/<repo>/)
   DUO_MOCK_JSON           optional  saved xp_summaries response, for offline runs
   DUO_MOCK_COURSE_JSON    optional  saved users/{id} (course) response, for offline runs
 
-Both endpoints are unofficial and undocumented; either could change or break at any time.
+The Duolingo endpoints and DW's progress endpoint are unofficial and undocumented; any of
+them could change or break at any time.
 
 Flags
   --out-dir PATH     output folder (overrides DASHBOARD_OUT_DIR)
@@ -46,6 +59,7 @@ Flags
 import argparse
 import base64
 import gzip
+import http.cookiejar
 import json
 import math
 import os
@@ -55,6 +69,7 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections import Counter
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -75,6 +90,14 @@ COURSE_FIELDS = (
     "currentCourse{title,pathSectioned{index,type,units{unitIndex,teachingObjective,cefrLevel,"
     "levels{finishedSessions,totalSessions,state,type}}}}"
 )
+
+DW_SITE = "https://learngerman.dw.com"
+DW_GRAPHQL = "https://webapi.dw.com/graphql"
+# Nicos Weg B1, Fit für den Job, Berufe entdecken, Jojo sucht das Glück: DW's B1 courses.
+DW_DEFAULT_COURSES = "36519718,73052672,39902336,53437698"
+# Per course: name, link and the lessons in order (chapter, title, link). Nothing else.
+DW_COURSE_FRAGMENT = ("fragment C on Course { name namedUrl contentLinks(targetTypes: LESSON) "
+                      "{ id groupName target { ... on Lesson { shortTitle namedUrl } } } }")
 
 DONE_STATES = {"passed", "legendary"}
 OPTIONAL_LEVEL_TYPES = {"unit_review"}   # auto-passed when its unit is finished
@@ -113,8 +136,14 @@ def load_config(args):
         "chart_start": date.fromisoformat(args.chart_start or env("DUO_CHART_START", "2026-10-01")),
         "daily_target": args.daily_target or int(env("DUO_DAILY_TARGET", "25")),
         "weekly_target": args.weekly_target or int(env("DUO_WEEKLY_TARGET", "175")),
-        "goal_minutes": int(env("DUO_GOAL_MINUTES", "60")),
         "proj_groups": parse_groups(env("DUO_PROJECTION_GROUPS", "B1=5,6;B2=7,8")),
+        "dw_email": env("DW_EMAIL"),
+        "dw_password": env("DW_PASSWORD"),
+        "dw_courses": [int(x) for x in env("DW_COURSES", DW_DEFAULT_COURSES).split(",") if x.strip()],
+        "dw_level": env("DW_LEVEL", "B1"),
+        "dw_daily_target": int(env("DW_DAILY_TARGET", "4")),
+        "dw_mock_courses": env("DW_MOCK_COURSES_JSON"),
+        "dw_mock_progress": env("DW_MOCK_PROGRESS_JSON"),
         "out_dir": Path(args.out_dir or env("DASHBOARD_OUT_DIR", "_site")),
         "repo": repo,
         "page_url": env("DUO_PAGE_URL", f"https://{owner.lower()}.github.io/{name}/"),
@@ -344,6 +373,171 @@ def section_etas(sections, today, rate):
     return sections
 
 
+# ---------- Deutsche Welle ----------
+
+class DWError(Exception):
+    pass
+
+
+def _dw_request(url, body=None):
+    return urllib.request.Request(
+        url, data=None if body is None else json.dumps(body).encode("utf-8"),
+        headers={"User-Agent": UA, "Accept": "application/json", "Content-Type": "application/json",
+                 "Accept-Encoding": "gzip"},
+        method="GET" if body is None else "POST")
+
+
+def _dw_read(opener, req, label, timeout=30):
+    with opener.open(req, timeout=timeout) as resp:
+        raw = resp.read()
+        wire = len(raw)
+        if resp.headers.get("Content-Encoding") == "gzip":
+            raw = gzip.decompress(raw)
+    print(f"{label}: {wire:,} bytes on the wire, {len(raw):,} bytes of JSON")
+    return json.loads(raw) if raw.strip() else None
+
+
+def fetch_dw_courses(cfg):
+    """Lesson lists of the tracked courses: one public GraphQL call (~7 KB gzipped for four)."""
+    if cfg["dw_mock_courses"]:
+        return load_json(cfg["dw_mock_courses"])
+    parts = " ".join(f"c{cid}: content(id: {cid}, lang: GERMAN) {{ ...C }}" for cid in cfg["dw_courses"])
+    data = _dw_read(urllib.request.build_opener(),
+                    _dw_request(DW_GRAPHQL, {"query": f"{{ {parts} }} {DW_COURSE_FRAGMENT}"}),
+                    "DW courses (GraphQL)")
+    if not data or data.get("errors"):
+        raise DWError(f"DW's GraphQL API returned errors: {(data or {}).get('errors')}")
+    return data
+
+
+def fetch_dw_progress(cfg, lesson_ids):
+    """Your progress records for `lesson_ids`. DW keeps progress per account behind a session
+    cookie, so: sign in, one POST for every lesson at once, sign out."""
+    if cfg["dw_mock_progress"]:
+        return load_json(cfg["dw_mock_progress"])
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+    login = _dw_request(f"{DW_SITE}/profiles/login",
+                        {"username": cfg["dw_email"], "password": cfg["dw_password"]})
+    try:
+        opener.open(login, timeout=20).read()
+    except urllib.error.HTTPError as e:
+        try:
+            reason = json.loads(e.read() or b"{}").get("error")
+        except (ValueError, AttributeError):
+            reason = None
+        raise DWError(f"DW sign-in failed (HTTP {e.code}{': ' + str(reason) if reason else ''})") from None
+    try:
+        return _dw_read(opener, _dw_request(f"{DW_SITE}/profiles/protected/lesson/progress",
+                                            {"ids": lesson_ids}), "DW lesson progress") or []
+    finally:
+        try:
+            opener.open(_dw_request(f"{DW_SITE}/profiles/public/logout"), timeout=10).read()
+        except Exception:  # signing out is a courtesy; the numbers are already in
+            pass
+
+
+def dw_lesson_ids(courses_raw):
+    blocks = (courses_raw or {}).get("data") or {}
+    return [link["id"] for c in blocks.values() if c
+            for link in c.get("contentLinks") or [] if link.get("id") is not None]
+
+
+def dw_lesson_done(p):
+    """DW ticks a lesson off once every exercise in it is answered; the score doesn't matter."""
+    if not p:
+        return False
+    total = int(p.get("allExerciseCount") or 0)
+    return total > 0 and int(p.get("doneExerciseCount") or 0) >= total
+
+
+def _dw_day(iso, tz):
+    """'2026-11-23T13:29:11.564Z' -> the local date it was saved on."""
+    try:
+        return datetime.fromisoformat(str(iso).replace("Z", "+00:00")).astimezone(tz).date()
+    except ValueError:
+        return None
+
+
+def _dw_url(path):
+    return DW_SITE + urllib.parse.quote(path, safe="/-_.~") if path else None
+
+
+def parse_dw(courses_raw, progress_raw, course_ids, today, tz, daily_target, level):
+    """DW numbers for data.json.
+
+    Lessons are counted on the day DW last saved them, so re-doing an exercise in an old
+    lesson moves that lesson to today. Courses come back in `course_ids` order; only the
+    first (main) one and the ones you've started are listed, to keep the card short.
+    """
+    blocks = (courses_raw or {}).get("data") or {}
+    prog = {p["cosLessonId"]: p for p in progress_raw or []
+            if isinstance(p, dict) and p.get("cosLessonId") is not None}
+    per_day = Counter()
+    courses, done_all, total_all = [], 0, 0
+    for pos, cid in enumerate(course_ids):
+        c = blocks.get(f"c{cid}")
+        if not c:
+            continue
+        total = done = started = 0
+        nxt = last = None
+        for link in c.get("contentLinks") or []:
+            target = link.get("target") or {}
+            p = prog.get(link.get("id"))
+            total += 1
+            if dw_lesson_done(p):
+                done += 1
+                d = _dw_day(p.get("lastModifiedDate"), tz)
+                if d:
+                    per_day[d] += 1
+                    last = max(last, d) if last else d
+                continue
+            ex_done = int((p or {}).get("doneExerciseCount") or 0)
+            if ex_done:
+                started += 1
+            if nxt is None:
+                nxt = {"title": (target.get("shortTitle") or "").strip() or None,
+                       "chapter": (link.get("groupName") or "").strip() or None,
+                       "url": _dw_url(target.get("namedUrl"))}
+                if ex_done:
+                    nxt["exercises"] = [ex_done, int(p.get("allExerciseCount") or 0)]
+        done_all += done
+        total_all += total
+        if pos == 0 or done or started:
+            course = {"id": cid, "name": (c.get("name") or "").strip(), "url": _dw_url(c.get("namedUrl")),
+                      "total": total, "done": done, "inProgress": started, "next": nxt,
+                      "lastDone": last.isoformat() if last else None}
+            course.update(_eta(total - done, today, 0, daily_target))
+            courses.append(course)
+    week_start = today - timedelta(days=today.weekday())
+    return {
+        "level": level,
+        "today": per_day[today],
+        "week": sum(n for d, n in per_day.items() if week_start <= d <= today),
+        "rate7": round(sum(per_day[today - timedelta(days=k)] for k in range(1, 8)) / 7, 2),
+        "last7": [per_day[today - timedelta(days=k)] for k in range(6, -1, -1)],
+        "done": done_all,
+        "total": total_all,
+        "courses": courses,
+    }
+
+
+def load_dw(cfg, today):
+    """data.json's 'dw' block: None when DW isn't set up, {'error': ...} when it failed."""
+    if not ((cfg["dw_email"] and cfg["dw_password"]) or cfg["dw_mock_progress"]):
+        print("DW: no DW_EMAIL/DW_PASSWORD, leaving Deutsche Welle out.")
+        return None
+    try:
+        courses_raw = fetch_dw_courses(cfg)
+        progress_raw = fetch_dw_progress(cfg, dw_lesson_ids(courses_raw))
+        return parse_dw(courses_raw, progress_raw, cfg["dw_courses"], today, cfg["tz"],
+                        cfg["dw_daily_target"], cfg["dw_level"])
+    except (DWError, OSError, ValueError, KeyError, TypeError) as e:
+        # Never the URL or the request: the message is safe for a public Actions log.
+        msg = str(e) if isinstance(e, DWError) else f"{type(e).__name__}: {e}"
+        print(f"::warning::Deutsche Welle progress skipped - {msg}")
+        return {"error": msg, "level": cfg["dw_level"]}
+
+
 # ---------- history ----------
 
 def daily_series(data, start, end):
@@ -373,7 +567,8 @@ def avg_lessons(days):
 
 # ---------- data.json ----------
 
-def build_data(cfg, now, xp_raw, course_raw):
+def build_data(cfg, now, xp_raw, course_raw, dw=None):
+    """Everything the page shows. `dw` is load_dw()'s block (None leaves DW out)."""
     today = now.date()
     start = today - timedelta(days=cfg["days"] - 1)
     days = daily_series(xp_raw, start, today)
@@ -408,7 +603,7 @@ def build_data(cfg, now, xp_raw, course_raw):
         "targets": {
             "dailyLessons": cfg["daily_target"],
             "weeklyLessons": cfg["weekly_target"],
-            "dailyMinutes": cfg["goal_minutes"],
+            "dwDailyLessons": cfg["dw_daily_target"],
         },
         "todayStats": {
             "lessons": t["lessons"],
@@ -438,6 +633,7 @@ def build_data(cfg, now, xp_raw, course_raw):
             "sections": course["sections"],
         },
         "projections": projections,
+        "dw": dw,
     }
 
 
@@ -485,7 +681,8 @@ def main():
         print(json.dumps(xp_raw, indent=2)[:3000])
         print(json.dumps(course_raw, indent=2)[:3000])
 
-    data = build_data(cfg, now, xp_raw, course_raw)
+    dw = load_dw(cfg, today)
+    data = build_data(cfg, now, xp_raw, course_raw, dw)
     page, data_file = write_site(cfg["out_dir"], data, cfg["page_url"])
 
     st, td, path = data["stats"], data["todayStats"], data["path"]
@@ -504,6 +701,12 @@ def main():
         else:
             print(f"{p['label']} (sections {secs}): {p['through']:,} lessons to go -> "
                   f"{p.get('date', 'n/a')} at {st['rate7']:.1f}/day, {p.get('targetDate')} at target pace")
+    if dw and not dw.get("error"):
+        print(f"DW {dw['level']}: {dw['today']} / {data['targets']['dwDailyLessons']} lessons today, "
+              f"{dw['week']} this week, {dw['done']}/{dw['total']} done in the tracked courses")
+        for c in dw["courses"]:
+            print(f"  {c['name']}: {c['done']}/{c['total']} lessons"
+                  + (f", {c['inProgress']} in progress" if c["inProgress"] else ""))
 
 
 if __name__ == "__main__":

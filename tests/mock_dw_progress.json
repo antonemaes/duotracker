@@ -1,0 +1,21 @@
+[
+  {"language": "de", "cosLessonId": 72632565, "cosCourseId": 73052672, "cosLessonVersion": 0,
+   "doneExerciseCount": 15, "allExerciseCount": 15, "resultPoints": 24, "maxPointsForAllExercises": 43,
+   "lastModifiedDate": "2026-11-20T13:29:11.564Z", "exerciseProgresses": [], "finalTest": false},
+  {"language": "de", "cosLessonId": 72632566, "cosCourseId": 73052672, "cosLessonVersion": 0,
+   "doneExerciseCount": 12, "allExerciseCount": 12, "resultPoints": 30, "maxPointsForAllExercises": 36,
+   "lastModifiedDate": "2026-11-19T23:30:00.000Z", "exerciseProgresses": [], "finalTest": false},
+  {"language": "de", "cosLessonId": 72632567, "cosCourseId": 73052672, "cosLessonVersion": 0,
+   "doneExerciseCount": 5, "allExerciseCount": 14, "resultPoints": 9, "maxPointsForAllExercises": 40,
+   "lastModifiedDate": "2026-11-20T15:02:00.000Z", "exerciseProgresses": [], "finalTest": false},
+  {"language": "de", "cosLessonId": 38462985, "cosCourseId": 36519718, "cosLessonVersion": 0,
+   "doneExerciseCount": 10, "allExerciseCount": 10, "resultPoints": 25, "maxPointsForAllExercises": 30,
+   "lastModifiedDate": "2026-11-18T09:00:00.000Z", "exerciseProgresses": [], "finalTest": false},
+  {"language": "de", "cosLessonId": 38462119, "cosCourseId": 36519718, "cosLessonVersion": 0,
+   "doneExerciseCount": 8, "allExerciseCount": 8, "resultPoints": 20, "maxPointsForAllExercises": 24,
+   "lastModifiedDate": "2026-11-16T22:30:00.000Z", "exerciseProgresses": [], "finalTest": false},
+  {"language": "de", "cosLessonId": 99999999, "cosCourseId": 11111111, "cosLessonVersion": 0,
+   "doneExerciseCount": 4, "allExerciseCount": 4, "resultPoints": 4, "maxPointsForAllExercises": 4,
+   "lastModifiedDate": "2026-11-20T10:00:00.000Z", "exerciseProgresses": [], "finalTest": false},
+  null
+]

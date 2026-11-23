@@ -22,8 +22,8 @@ def load(name):
 def cfg(**over):
     base = {
         "tz": TZ, "days": 150, "chart_start": date(2026, 10, 1), "daily_target": 25,
-        "weekly_target": 175, "goal_minutes": 60, "proj_groups": dd.parse_groups("B1=5,6;B2=7,8"),
-        "repo": "owner/repo",
+        "weekly_target": 175, "proj_groups": dd.parse_groups("B1=5,6;B2=7,8"),
+        "repo": "owner/repo", "dw_daily_target": 4,
     }
     base.update(over)
     return base
@@ -126,6 +126,61 @@ class BuildData(unittest.TestCase):
 
     def test_small_enough_for_a_5_minute_poll(self):
         self.assertLess(len(json.dumps(self.data)), 20_000)
+
+    def test_dw_targets_replace_the_minutes_goal(self):
+        self.assertEqual(self.data["targets"], {"dailyLessons": 25, "weeklyLessons": 175, "dwDailyLessons": 4})
+        self.assertIsNone(self.data["dw"])            # DW not set up: left out
+
+
+DW_IDS = [36519718, 73052672, 39902336]
+
+
+class DeutscheWelle(unittest.TestCase):
+    def setUp(self):
+        self.today = date(2026, 11, 20)               # a Friday; the week starts Mon 16 Nov
+        self.dw = dd.parse_dw(load("mock_dw_courses.json"), load("mock_dw_progress.json"),
+                              DW_IDS, self.today, TZ, 4, "B1")
+
+    def test_lessons_count_on_the_local_day_they_were_finished(self):
+        # 13:29Z and 23:30Z the evening before are both 20 Nov in Zurich; 22:30Z on 16 Nov is still the 16th.
+        self.assertEqual(self.dw["today"], 2)
+        self.assertEqual(self.dw["last7"], [0, 0, 1, 0, 1, 0, 2])   # 14-20 Nov
+        self.assertEqual(self.dw["week"], 4)
+        self.assertEqual(self.dw["rate7"], round(2 / 7, 2))          # 13-19 Nov, today left out
+
+    def test_a_lesson_is_done_when_every_exercise_is_answered(self):
+        self.assertTrue(dd.dw_lesson_done({"doneExerciseCount": 15, "allExerciseCount": 15}))
+        self.assertFalse(dd.dw_lesson_done({"doneExerciseCount": 5, "allExerciseCount": 14}))
+        self.assertFalse(dd.dw_lesson_done({"doneExerciseCount": 0, "allExerciseCount": 0}))
+        self.assertFalse(dd.dw_lesson_done(None))
+
+    def test_courses_main_first_then_started_ones(self):
+        nw, fit = self.dw["courses"]                  # Berufe entdecken isn't started: left out
+        self.assertEqual((nw["name"], nw["done"], nw["total"], nw["inProgress"]), ("Nicos Weg", 2, 4, 0))
+        self.assertEqual(nw["next"]["title"], "Bei der Arbeit")
+        self.assertEqual(nw["next"]["chapter"], "1 Neue Wege")
+        self.assertEqual(nw["lastDone"], "2026-11-18")
+        self.assertEqual(nw["targetDate"], "2026-11-21")              # 2 left at 4 a day
+        self.assertEqual((fit["done"], fit["total"], fit["inProgress"]), (2, 3, 1))
+        self.assertEqual(fit["next"]["exercises"], [5, 14])            # the half-done lesson is next
+        self.assertEqual(fit["url"], "https://learngerman.dw.com/de/fit-f%C3%BCr-den-job/c-73052672")
+        self.assertEqual((self.dw["done"], self.dw["total"]), (4, 9))  # unknown lesson ids ignored
+
+    def test_lesson_ids_for_the_progress_call(self):
+        self.assertEqual(len(dd.dw_lesson_ids(load("mock_dw_courses.json"))), 9)
+
+    def test_build_data_carries_the_dw_block(self):
+        now = datetime(2026, 11, 20, 18, 30, tzinfo=TZ)
+        data = dd.build_data(cfg(), now, load("mock_range.json"), load("mock_course.json"), self.dw)
+        self.assertEqual(data["dw"]["today"], 2)
+        self.assertLess(len(json.dumps(data, ensure_ascii=False)), 20_000)
+
+    def test_failures_are_reported_not_raised(self):
+        c = cfg(dw_email="a@b.c", dw_password="x", dw_courses=DW_IDS, dw_level="B1",
+                dw_mock_courses=str(HERE / "does-not-exist.json"), dw_mock_progress=None)
+        self.assertEqual(dd.load_dw(c, self.today)["level"], "B1")
+        self.assertIn("error", dd.load_dw(c, self.today))
+        self.assertIsNone(dd.load_dw(cfg(dw_email=None, dw_password=None, dw_mock_progress=None), self.today))
 
 
 class WriteSite(unittest.TestCase):
