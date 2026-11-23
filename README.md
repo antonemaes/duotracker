@@ -79,7 +79,7 @@ The open page re-fetches `data.json` every minute, and again whenever you come b
 
 **What's on the page** (mobile-first; 2 columns on tablets, a 12-column grid on desktop; light and dark mode follow the system):
 
-- **Today:** activity-style rings for Duolingo lessons vs `DUO_DAILY_TARGET` (outer, green) and Deutsche Welle lessons vs `DW_DAILY_TARGET` (inner, blue), streak, XP, and how many lessons of each are still to go. Without DW set up it's a single Duolingo ring.
+- **Today:** a green outer ring for Duolingo lessons vs `DUO_DAILY_TARGET`, and inside it a blue ring split into one segment per Deutsche Welle lesson in `DW_DAILY_TARGET`, each lit once that lesson is done. Plus streak, XP, and how many lessons of each are still to go. Without DW set up it's just the Duolingo ring.
 - **Deutsche Welle card:** each DW course you've started (plus the main one in `DW_COURSES`) with lessons done, a progress bar, the next lesson (linked) and the finish date at your DW target, next to a 7-day bar chart of DW lessons per day with the target line.
 - **Level finish cards** for `DUO_PROJECTION_GROUPS`: by default **B1 (Sections 5–6)** and **B2 (Sections 7–8)**. Each card shows the projected date the level is finished, days left, lessons to go (counting every unfinished lesson up to the level's last section), a progress bar across the level's sections, and a what-if date at your daily target pace.
 - **Key numbers:** this week vs target, the daily average with its change vs the 7 days before, course % complete, and total XP.
@@ -97,7 +97,7 @@ The open page re-fetches `data.json` every minute, and again whenever you come b
 
 ### Deutsche Welle (DW Learn German)
 
-The dashboard also tracks your lessons on [learngerman.dw.com](https://learngerman.dw.com/de/deutsch-lernen/s-9095). By default it follows DW's four **B1** courses: *Nicos Weg* (the main one), *Fit für den Job*, *Berufe entdecken* and *Jojo sucht das Glück*. A lesson finished in any of them counts toward the 4-a-day target.
+The dashboard also tracks your lessons on [learngerman.dw.com](https://learngerman.dw.com/de/deutsch-lernen/s-9095). By default it follows DW's four **B1** courses: *Nicos Weg* (the main one), *Fit für den Job*, *Berufe entdecken* and *Jojo sucht das Glück*. A lesson finished in any of them counts toward the 2-a-day target.
 
 1. In **Settings → Secrets and variables → Actions**, add `DW_EMAIL` and `DW_PASSWORD` (your DW sign-in). Use a password you don't use anywhere else: it sits in GitHub's secret store, like `DUO_JWT`.
 2. Run the dashboard workflow. Its log shows a `DW B1: … lessons today` line, or a warning saying why DW was skipped.
@@ -163,7 +163,7 @@ Dashboard env vars (set in the `env:` block of `.github/workflows/dashboard.yml`
 | `DUO_WEEKLY_TARGET` | `175` | Lessons per week: the *This week* tile only (25/day × 7) |
 | `DUO_PROJECTION_GROUPS` | `B1=5,6;B2=7,8` | Finish-date cards: `name=sections`, separated by `;` (sections numbered like the app). A plain list such as `5,6` gives one card per section |
 | `DW_EMAIL` / `DW_PASSWORD` | none | Your DW sign-in (secrets). Without them DW is left out |
-| `DW_DAILY_TARGET` | `4` | DW lessons per day: inner ring, the target line on the DW chart, finish dates |
+| `DW_DAILY_TARGET` | `2` | DW lessons per day: the inner ring (one segment per lesson), the target line on the DW chart, finish dates |
 | `DW_COURSES` | the four B1 courses | DW course ids (the number after `/c-` in a course URL), main one first |
 | `DW_LEVEL` | `B1` | Label on the DW card and ring key |
 | `DW_MOCK_COURSES_JSON` / `DW_MOCK_PROGRESS_JSON` | none | Saved DW responses for offline runs |

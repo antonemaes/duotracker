@@ -34,7 +34,7 @@ Config (environment variables)
                                     (default: the B1 courses Nicos Weg, Fit für den Job,
                                     Berufe entdecken and Jojo sucht das Glück)
   DW_LEVEL                optional  label for the tracked courses       (default B1)
-  DW_DAILY_TARGET         optional  DW lessons per day                  (default 4)
+  DW_DAILY_TARGET         optional  DW lessons per day                  (default 2)
   DW_MOCK_COURSES_JSON    optional  saved GraphQL course response, for offline runs
   DW_MOCK_PROGRESS_JSON   optional  saved lesson-progress response, for offline runs
   DASHBOARD_OUT_DIR       optional  output folder                       (default _site)
@@ -141,7 +141,7 @@ def load_config(args):
         "dw_password": env("DW_PASSWORD"),
         "dw_courses": [int(x) for x in env("DW_COURSES", DW_DEFAULT_COURSES).split(",") if x.strip()],
         "dw_level": env("DW_LEVEL", "B1"),
-        "dw_daily_target": int(env("DW_DAILY_TARGET", "4")),
+        "dw_daily_target": int(env("DW_DAILY_TARGET", "2")),
         "dw_mock_courses": env("DW_MOCK_COURSES_JSON"),
         "dw_mock_progress": env("DW_MOCK_PROGRESS_JSON"),
         "out_dir": Path(args.out_dir or env("DASHBOARD_OUT_DIR", "_site")),

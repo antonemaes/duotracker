@@ -23,7 +23,7 @@ def cfg(**over):
     base = {
         "tz": TZ, "days": 150, "chart_start": date(2026, 10, 1), "daily_target": 25,
         "weekly_target": 175, "proj_groups": dd.parse_groups("B1=5,6;B2=7,8"),
-        "repo": "owner/repo", "dw_daily_target": 4,
+        "repo": "owner/repo", "dw_daily_target": 2,
     }
     base.update(over)
     return base
@@ -128,7 +128,7 @@ class BuildData(unittest.TestCase):
         self.assertLess(len(json.dumps(self.data)), 20_000)
 
     def test_dw_targets_replace_the_minutes_goal(self):
-        self.assertEqual(self.data["targets"], {"dailyLessons": 25, "weeklyLessons": 175, "dwDailyLessons": 4})
+        self.assertEqual(self.data["targets"], {"dailyLessons": 25, "weeklyLessons": 175, "dwDailyLessons": 2})
         self.assertIsNone(self.data["dw"])            # DW not set up: left out
 
 

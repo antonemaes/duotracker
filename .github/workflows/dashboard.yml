@@ -56,7 +56,7 @@ jobs:
           DUO_PROJECTION_GROUPS: "B1=5,6;B2=7,8"  # finish-date cards per level (sections numbered like the app)
           DW_EMAIL: ${{ secrets.DW_EMAIL }}         # learngerman.dw.com sign-in
           DW_PASSWORD: ${{ secrets.DW_PASSWORD }}
-          DW_DAILY_TARGET: "4"               # DW lessons per day (inner ring)
+          DW_DAILY_TARGET: "2"               # DW lessons per day (inner ring, one segment each)
           DW_LEVEL: "B1"                     # DW_COURSES defaults to DW's four B1 courses
           DUO_REPO: ${{ github.repository }} # for the page's links
         run: python duo_dashboard.py --out-dir _site

@@ -214,9 +214,10 @@ main {
     var(--card);
 }
 .ring-wrap { position: relative; width: 156px; height: 156px; }
-.ring-wrap svg { width: 100%; height: 100%; display: block; transform: rotate(-90deg); overflow: visible; }
-.ring-track, .ring-val { fill: none; }
-.ring-val { stroke-linecap: round; transition: stroke-dashoffset 1.2s cubic-bezier(.2, .8, .2, 1); }
+.ring-wrap svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.ring-track, .ring-val { fill: none; stroke-linecap: round; }
+.ring-track.off { opacity: .45; }
+.ring-val { transition: stroke-dashoffset 1.2s cubic-bezier(.2, .8, .2, 1); }
 .ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .hero-num { font-size: 50px; font-weight: 800; line-height: 1; letter-spacing: -.035em; }
 .hero-num.long { font-size: 38px; }
@@ -711,20 +712,32 @@ footer a:hover { border-bottom-color: var(--ink-2); }
   }
 
   // ---------- hero ----------
-  function ring(svg, rings, animate) {
+  // Rings drawn as arcs. Angles run clockwise from 12 o'clock.
+  const RING_W = 15, R_OUT = 80 - RING_W / 2, R_IN = R_OUT - RING_W - 5, TAU = 2 * Math.PI;
+  function arcPath(r, a0, a1) {
+    const pt = (a) => `${(80 + r * Math.sin(a)).toFixed(2)} ${(80 - r * Math.cos(a)).toFixed(2)}`;
+    if (a1 - a0 > Math.PI) { // SVG can't draw a full circle in one arc: go via the far side
+      const mid = (a0 + a1) / 2;
+      return `M${pt(a0)}A${r} ${r} 0 0 1 ${pt(mid)}A${r} ${r} 0 0 1 ${pt(a1)}`;
+    }
+    return `M${pt(a0)}A${r} ${r} 0 0 1 ${pt(a1)}`;
+  }
+  // segs: [{r, a0, a1, p (0-1), color, track, off, delay}]. off = no data: a faded empty track.
+  function ring(svg, segs, animate) {
     svg.replaceChildren();
-    const stroke = 15, gap = 5;
-    rings.forEach((rg, i) => {
-      const r = 80 - stroke / 2 - i * (stroke + gap);
-      const c = 2 * Math.PI * r;
-      const p = rg.max > 0 ? clamp(rg.v / rg.max, 0, 1) : 0;
-      s("circle", { cx: 80, cy: 80, r, class: "ring-track", stroke: `var(${rg.track})`, "stroke-width": stroke }, svg);
-      const arc = s("circle", {
-        cx: 80, cy: 80, r, class: "ring-val", stroke: `var(${rg.color})`, "stroke-width": stroke,
-        "stroke-dasharray": c.toFixed(2), "stroke-dashoffset": (animate && !reduceMotion ? c : c * (1 - p)).toFixed(2),
+    segs.forEach((g) => {
+      const d = arcPath(g.r, g.a0, g.a1), len = g.r * (g.a1 - g.a0);
+      s("path", { d, class: "ring-track" + (g.off ? " off" : ""), stroke: `var(${g.track})`, "stroke-width": RING_W }, svg);
+      if (g.off) return;
+      const p = clamp(g.p, 0, 1);
+      const arc = s("path", {
+        d, class: "ring-val", stroke: `var(${g.color})`, "stroke-width": RING_W,
+        "stroke-dasharray": `${len.toFixed(2)} ${len.toFixed(2)}`,
+        "stroke-dashoffset": (animate && !reduceMotion ? len : len * (1 - p)).toFixed(2),
       }, svg);
+      if (g.delay) arc.style.transitionDelay = `${g.delay}ms`;
       if (p <= 0) arc.setAttribute("stroke-opacity", "0");
-      if (animate && !reduceMotion) requestAnimationFrame(() => requestAnimationFrame(() => arc.setAttribute("stroke-dashoffset", (c * (1 - p)).toFixed(2))));
+      if (animate && !reduceMotion) requestAnimationFrame(() => requestAnimationFrame(() => arc.setAttribute("stroke-dashoffset", (len * (1 - p)).toFixed(2))));
     });
   }
 
@@ -733,13 +746,27 @@ footer a:hover { border-bottom-color: var(--ink-2); }
 
   function renderHero(animate) {
     const d = D.d, t = d.todayStats, T = d.targets, dw = dwOf(d);
-    const dwT = T.dwDailyLessons || 4;
+    const dwT = T.dwDailyLessons || 2;
     const when = D.staleDay ? "yesterday" : "today";
     $("todayLabel").textContent = D.staleDay ? "Yesterday · final" : "Today";
-    // Outer ring: Duolingo lessons. Inner ring: DW lessons (left out when DW isn't available).
-    const rings = [{ v: t.lessons, max: T.dailyLessons, color: "--good", track: "--good-track" }];
-    if (dw) rings.push({ v: dw.today, max: dwT, color: "--blue", track: "--blue-track" });
-    ring($("rings"), rings, animate);
+    // Outer ring: Duolingo lessons. Inner ring (when DW is set up): split into one segment per
+    // DW lesson in the daily target, each lit once that lesson is done. Past 8 a day the
+    // segments get too short, so it's a plain ring then.
+    const segs = [{ r: R_OUT, a0: 0, a1: TAU, p: T.dailyLessons > 0 ? t.lessons / T.dailyLessons : 0, color: "--good", track: "--good-track" }];
+    if (d.dw) {
+      const blue = { r: R_IN, color: "--blue", track: "--blue-track", off: !dw };
+      const done = dw ? dw.today : 0;
+      if (dwT >= 2 && dwT <= 8) {
+        // Half the gap between segments (3.5px) plus the round cap, as an angle.
+        const gapA = (3.5 + RING_W / 2) / R_IN, step = TAU / dwT;
+        for (let i = 0; i < dwT; i++) {
+          segs.push(Object.assign({ a0: i * step + gapA, a1: (i + 1) * step - gapA, p: done > i ? 1 : 0, delay: i * 300 }, blue));
+        }
+      } else {
+        segs.push(Object.assign({ a0: 0, a1: TAU, p: dwT > 0 ? done / dwT : 0 }, blue));
+      }
+    }
+    ring($("rings"), segs, animate);
     $("rings").setAttribute("aria-label", `${t.lessons} of ${T.dailyLessons} Duolingo lessons`
       + (dw ? ` and ${dw.today} of ${dwT} Deutsche Welle lessons` : "") + ` ${when}`);
     const hn = $("heroNum");
@@ -809,7 +836,7 @@ footer a:hover { border-bottom-color: var(--ink-2); }
   }
 
   function renderDw(animate) {
-    const d = D.d, dw = d.dw, card = $("dwCard"), T = d.targets.dwDailyLessons || 4;
+    const d = D.d, dw = d.dw, card = $("dwCard"), T = d.targets.dwDailyLessons || 2;
     card.hidden = !dw;
     $("app").classList.toggle("has-dw", !!dw);
     if (!dw) return;
