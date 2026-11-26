@@ -32,7 +32,7 @@ jobs:
     timeout-minutes: 5
     environment:
       name: github-pages
-      url: ${{ steps.deploy.outputs.page_url || steps.deploy_retry.outputs.page_url }}
+      url: ${{ steps.deploy.outputs.page_url || steps.deploy2.outputs.page_url || steps.deploy3.outputs.page_url || steps.deploy4.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -64,14 +64,30 @@ jobs:
       - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
-      # GitHub's artifact lookup is occasionally flaky ("No artifacts named github-pages
-      # were found") right after the upload succeeded, so try the deploy once more.
+      # Right after the upload, GitHub often doesn't list the artifact yet and the deploy
+      # fails in ~1 s ("No artifacts named github-pages were found"). Retry after 3, 6 and
+      # 12 s, so a refresh only waits as long as GitHub needs (one fixed 20 s wait before
+      # made about half of the ↻ refreshes take ~50 s instead of ~25 s).
       - id: deploy
         uses: actions/deploy-pages@v5
         continue-on-error: true
-      - name: Wait before retrying the deploy
+      - name: Wait 3 s for the upload to be listed
         if: steps.deploy.outcome == 'failure'
-        run: sleep 20
-      - id: deploy_retry
+        run: sleep 3
+      - id: deploy2
         if: steps.deploy.outcome == 'failure'
+        uses: actions/deploy-pages@v5
+        continue-on-error: true
+      - name: Wait 6 s more
+        if: steps.deploy2.outcome == 'failure'
+        run: sleep 6
+      - id: deploy3
+        if: steps.deploy2.outcome == 'failure'
+        uses: actions/deploy-pages@v5
+        continue-on-error: true
+      - name: Wait 12 s more
+        if: steps.deploy3.outcome == 'failure'
+        run: sleep 12
+      - id: deploy4
+        if: steps.deploy3.outcome == 'failure'
         uses: actions/deploy-pages@v5
